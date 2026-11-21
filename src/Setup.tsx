@@ -29,7 +29,7 @@ export function Setup({
       </small>
       {pack.id === "pack4" && (
         <p className="notice small">
-          19+ 성인 카드예요. 스킨십·외박처럼 말로 꺼내기 어려운 것만 담았어요.
+          늦은 밤, 단둘일 때 꺼내기 어려운 질문만 담았어요.
         </p>
       )}
       {!manual ? (

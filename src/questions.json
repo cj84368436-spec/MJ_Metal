@@ -1,5 +1,5 @@
 {
-  "version": "3.0.0",
+  "version": "4.0.0",
   "app": "secret-five",
   "name": "비밀 다섯 장",
   "description": "앱인토스 비게임 미니앱 60문항 풀. 한 판 = 5문항. 둘 다 yes인 카드만 공개한다.",
@@ -18,27 +18,67 @@
       "questions": [
         {
           "id": "p1-01",
-          "question": "별일 없어도 목소리 듣고 싶어서 전화 걸어도 돼?",
+          "question": "내 프사 바뀐 거, 눈치챈 적 있어?",
           "options": [
             {
               "value": "yes",
-              "label": "걸어도 돼"
+              "label": "눈치챘어"
             },
             {
               "value": "maybe",
-              "label": "생각해볼게"
+              "label": "가끔"
             },
             {
               "value": "no",
-              "label": "지금은 문자로"
+              "label": "몰랐어"
             }
           ],
-          "matchMessage": "별일 없어도 서로 전화할 사이.",
-          "followUp": "오늘 밤 한 통, 이유 없이 걸어봐."
+          "matchMessage": "프사 하나까지 봤다는 거.",
+          "followUp": "다음엔 바뀌면 먼저 말해줘."
         },
         {
           "id": "p1-02",
-          "question": "재밌는 일 생기면 제일 먼저 나한테 말해?",
+          "question": "내가 톡 보내면 알림 뜨자마자 열어본 적 있어?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "바로 열어"
+            },
+            {
+              "value": "maybe",
+              "label": "가끔"
+            },
+            {
+              "value": "no",
+              "label": "나중에 봐"
+            }
+          ],
+          "matchMessage": "알림 뜨자마자 열어봤대.",
+          "followUp": "다음 톡은 조금 늦게 봐줄게."
+        },
+        {
+          "id": "p1-03",
+          "question": "하루에 한 번은 나랑 얘기하고 싶어?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "하고 싶어"
+            },
+            {
+              "value": "maybe",
+              "label": "생각나면"
+            },
+            {
+              "value": "no",
+              "label": "바쁘면 몰라"
+            }
+          ],
+          "matchMessage": "하루 한 번, 서로 얘기하고 싶대.",
+          "followUp": "오늘은 네가 먼저 말 걸어."
+        },
+        {
+          "id": "p1-04",
+          "question": "재밌는 일 생기면 제일 먼저 나한테 말하고 싶어?",
           "options": [
             {
               "value": "yes",
@@ -57,112 +97,12 @@
           "followUp": "오늘 웃긴 거 하나, 지금 보내."
         },
         {
-          "id": "p1-03",
-          "question": "오늘 나 보러 나올 때 거울 앞에서 한 번 더 봤어?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "한 번 더 봤어"
-            },
-            {
-              "value": "maybe",
-              "label": "그냥 나왔어"
-            },
-            {
-              "value": "no",
-              "label": "안 봤어"
-            }
-          ],
-          "matchMessage": "오늘, 서로 한 번 더 봤대.",
-          "followUp": "다음엔 그 얘기 먼저 꺼내봐."
-        },
-        {
-          "id": "p1-04",
-          "question": "내 톡 답장, 기다린 적 있어?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "기다렸어"
-            },
-            {
-              "value": "maybe",
-              "label": "좀 있었어"
-            },
-            {
-              "value": "no",
-              "label": "안 기다려"
-            }
-          ],
-          "matchMessage": "답장 기다린 적, 서로 있었대.",
-          "followUp": "다음 답장은 조금 빨리 보내."
-        },
-        {
           "id": "p1-05",
-          "question": "하루에 나 생각한 순간, 몇 번쯤 있었어?",
+          "question": "우리 다음 약속, 벌써 기다려져?",
           "options": [
             {
               "value": "yes",
-              "label": "몇 번 있었어"
-            },
-            {
-              "value": "maybe",
-              "label": "한 번쯤"
-            },
-            {
-              "value": "no",
-              "label": "딱히 없었어"
-            }
-          ],
-          "matchMessage": "오늘 하루, 서로 생각났대.",
-          "followUp": "오늘 밤, 생각난 순간 하나 말해줘."
-        },
-        {
-          "id": "p1-06",
-          "question": "우리 대화, 끊기면 아쉬운 편이야?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "아쉬워"
-            },
-            {
-              "value": "maybe",
-              "label": "가끔"
-            },
-            {
-              "value": "no",
-              "label": "괜찮아"
-            }
-          ],
-          "matchMessage": "대화 끊기면 둘 다 아쉽대.",
-          "followUp": "오늘은 잘 자 대신 내일 봐."
-        },
-        {
-          "id": "p1-07",
-          "question": "내 스토리, 누구보다 먼저 보는 편이야?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "먼저 봐"
-            },
-            {
-              "value": "maybe",
-              "label": "가끔"
-            },
-            {
-              "value": "no",
-              "label": "그냥 넘겨"
-            }
-          ],
-          "matchMessage": "서로 제일 먼저 본다는 거.",
-          "followUp": "다음 스토리엔 답장 한 줄."
-        },
-        {
-          "id": "p1-08",
-          "question": "다음 약속, 벌써 은근히 기다리고 있어?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "기다리고 있어"
+              "label": "기다려져"
             },
             {
               "value": "maybe",
@@ -177,7 +117,7 @@
           "followUp": "날짜 하나, 지금 정해두자."
         },
         {
-          "id": "p1-09",
+          "id": "p1-06",
           "question": "나랑 있을 때 시간 빨리 간다고 느낀 적 있어?",
           "options": [
             {
@@ -197,28 +137,8 @@
           "followUp": "다음엔 한 시간만 더 늘려보자."
         },
         {
-          "id": "p1-10",
-          "question": "내가 먼저 연락 안 하면, 먼저 해볼 생각 있어?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "먼저 할게"
-            },
-            {
-              "value": "maybe",
-              "label": "타이밍 봐서"
-            },
-            {
-              "value": "no",
-              "label": "기다릴래"
-            }
-          ],
-          "matchMessage": "둘 다 먼저 해볼 생각 있대.",
-          "followUp": "오늘은 가위바위보, 진 사람이 보내."
-        },
-        {
-          "id": "p1-11",
-          "question": "나한테만 쓰는 말투, 본인도 알고 있어?",
+          "id": "p1-07",
+          "question": "내게만 쓰는 말투, 본인도 알고 있어?",
           "options": [
             {
               "value": "yes",
@@ -237,12 +157,12 @@
           "followUp": "오늘은 그 말투로 한 번 더."
         },
         {
-          "id": "p1-12",
-          "question": "오늘 나한테 잘 보이려고 뭐 하나 신경 썼어?",
+          "id": "p1-08",
+          "question": "오늘 나 만나러 나올 때 뭐 입을지 고민했어?",
           "options": [
             {
               "value": "yes",
-              "label": "신경 썼어"
+              "label": "고민했어"
             },
             {
               "value": "maybe",
@@ -250,14 +170,14 @@
             },
             {
               "value": "no",
-              "label": "안 썼어"
+              "label": "그냥 나왔어"
             }
           ],
-          "matchMessage": "오늘, 서로 조금씩 신경 썼대.",
-          "followUp": "그게 뭐였는지 다음에 알려줘."
+          "matchMessage": "오늘, 서로 뭐 입을지 고민했대.",
+          "followUp": "다음엔 뭐 입을지 물어봐."
         },
         {
-          "id": "p1-13",
+          "id": "p1-09",
           "question": "누가 우리 뭐냐고 물으면, 웃으면서 넘길 수 있어?",
           "options": [
             {
@@ -277,8 +197,68 @@
           "followUp": "다음에 물으면, 웃으면서 대답해."
         },
         {
-          "id": "p1-14",
-          "question": "같이 걷다 어깨 부딪히면, 일부러 안 피하지?",
+          "id": "p1-10",
+          "question": "내 스토리, 누구보다 먼저 보는 편이야?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "먼저 봐"
+            },
+            {
+              "value": "maybe",
+              "label": "가끔"
+            },
+            {
+              "value": "no",
+              "label": "그냥 넘겨"
+            }
+          ],
+          "matchMessage": "서로 제일 먼저 본다는 거.",
+          "followUp": "다음 스토리엔 답장 한 줄."
+        },
+        {
+          "id": "p1-11",
+          "question": "내가 먼저 연락 안 하면, 먼저 해볼 생각 있어?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "먼저 할게"
+            },
+            {
+              "value": "maybe",
+              "label": "타이밍 봐서"
+            },
+            {
+              "value": "no",
+              "label": "기다릴래"
+            }
+          ],
+          "matchMessage": "둘 다 먼저 해볼 생각 있대.",
+          "followUp": "오늘은 가위바위보, 진 사람이 보내."
+        },
+        {
+          "id": "p1-12",
+          "question": "다음 약속은 그냥 '데이트'라고 불러도 돼?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "데이트지"
+            },
+            {
+              "value": "maybe",
+              "label": "좋을 듯"
+            },
+            {
+              "value": "no",
+              "label": "그냥 약속"
+            }
+          ],
+          "matchMessage": "다음 약속, 이제 데이트.",
+          "followUp": "다음엔 데이트라고 먼저 말해."
+        },
+        {
+          "id": "p1-13",
+          "question": "같이 걷다 어깨 부딪히면, 일부러 안 피하는 편이야?",
           "options": [
             {
               "value": "yes",
@@ -297,31 +277,51 @@
           "followUp": "다음엔 조금 더 가까이 걸어."
         },
         {
-          "id": "p1-15",
-          "question": "우리 다음에 또 보는 거, 당연한 거지?",
+          "id": "p1-14",
+          "question": "오늘 하루 중 나 생각난 순간, 하나라도 있었어?",
           "options": [
             {
               "value": "yes",
-              "label": "당연하지"
+              "label": "있었어"
             },
             {
               "value": "maybe",
-              "label": "보고 싶으면"
+              "label": "한 번쯤"
             },
             {
               "value": "no",
-              "label": "글쎄"
+              "label": "딱히 없어"
             }
           ],
-          "matchMessage": "다음 만남은 이미 정해진 거.",
-          "followUp": "그럼 다음 주, 하루 비워둬."
+          "matchMessage": "오늘 하루, 서로 생각났대.",
+          "followUp": "오늘 밤, 그 순간 하나 말해줘."
+        },
+        {
+          "id": "p1-15",
+          "question": "요즘 내 톡 답장, 기다린 적 있어?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "기다렸어"
+            },
+            {
+              "value": "maybe",
+              "label": "좀 있었어"
+            },
+            {
+              "value": "no",
+              "label": "안 기다려"
+            }
+          ],
+          "matchMessage": "답장 기다린 적, 서로 있었대.",
+          "followUp": "다음 답장은 조금 빨리."
         }
       ]
     },
     {
       "id": "pack2",
       "title": "심장 간질간질",
-      "subtitle": "손잡기, 주머니, 옆자리, 늦은 밤",
+      "subtitle": "손, 옆자리, 어깨, 그리고 아쉬운 헤어짐",
       "sku": "secret-five-pack2",
       "price_krw": 1100,
       "questions": [
@@ -383,27 +383,27 @@
             }
           ],
           "matchMessage": "이어폰 하나, 둘이 나눠.",
-          "followUp": "노래 하나씩, 번갈아 골라."
+          "followUp": "노래는 한 곡씩 번갈아."
         },
         {
           "id": "p2-04",
-          "question": "걷다가 내가 손 잡으면, 놀랄 것 같아?",
+          "question": "오늘 헤어질 때 내가 손 잡으면, 그냥 잡혀줄 거야?",
           "options": [
             {
               "value": "yes",
-              "label": "안 놀라"
+              "label": "잡혀줄게"
             },
             {
               "value": "maybe",
-              "label": "조금"
+              "label": "놀랄 듯"
             },
             {
               "value": "no",
-              "label": "놀랄 듯"
+              "label": "아직은"
             }
           ],
-          "matchMessage": "손 잡아도, 놀라지 않을 사이.",
-          "followUp": "다음 횡단보도에서, 먼저."
+          "matchMessage": "오늘 손, 서로 잡기로.",
+          "followUp": "다음 횡단보도에서 먼저."
         },
         {
           "id": "p2-05",
@@ -467,26 +467,126 @@
         },
         {
           "id": "p2-08",
-          "question": "늦은 밤, 단둘이 술 한잔해도 돼?",
+          "question": "집 데려다주고 헤어질 때, 아쉬워서 다시 연락한 적 있어?",
           "options": [
             {
               "value": "yes",
-              "label": "좋아"
+              "label": "있어"
             },
             {
               "value": "maybe",
-              "label": "일정 봐서"
+              "label": "한 번쯤"
             },
             {
               "value": "no",
-              "label": "다음에"
+              "label": "바로 들어가"
             }
           ],
-          "matchMessage": "늦은 밤, 단둘이 한잔.",
-          "followUp": "다음 날 아침은 비워둬."
+          "matchMessage": "헤어지고도 아쉬웠대.",
+          "followUp": "오늘은 도착하면 바로 톡."
         },
         {
           "id": "p2-09",
+          "question": "단둘이 있을 때 시선 마주치면 나만 어색해?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "나도 어색해"
+            },
+            {
+              "value": "maybe",
+              "label": "가끔"
+            },
+            {
+              "value": "no",
+              "label": "안 어색해"
+            }
+          ],
+          "matchMessage": "마주친 눈, 둘 다 어색했대.",
+          "followUp": "다음엔 먼저 웃어봐."
+        },
+        {
+          "id": "p2-10",
+          "question": "내가 먼저 손 잡아도, 이상하게 안 볼 거지?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "안 볼 거야"
+            },
+            {
+              "value": "maybe",
+              "label": "당황할 듯"
+            },
+            {
+              "value": "no",
+              "label": "조금 놀랄 듯"
+            }
+          ],
+          "matchMessage": "먼저 잡아도 괜찮대.",
+          "followUp": "오늘은 내가 먼저 잡을게."
+        },
+        {
+          "id": "p2-11",
+          "question": "늦게까지 같이 있다 헤어지면, 아쉬운 편이야?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "아쉬워"
+            },
+            {
+              "value": "maybe",
+              "label": "조금"
+            },
+            {
+              "value": "no",
+              "label": "괜찮아"
+            }
+          ],
+          "matchMessage": "늦게 헤어지면 둘 다 아쉽대.",
+          "followUp": "다음엔 한 정거장 더."
+        },
+        {
+          "id": "p2-12",
+          "question": "내 어깨에 잠깐 기대서 눈 감아도 돼?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "기대도 돼"
+            },
+            {
+              "value": "maybe",
+              "label": "조금만"
+            },
+            {
+              "value": "no",
+              "label": "피곤하면"
+            }
+          ],
+          "matchMessage": "어깨 빌려주기로.",
+          "followUp": "다음엔 내가 기대볼게."
+        },
+        {
+          "id": "p2-13",
+          "question": "내가 취했을 때 손 잡으면, 그냥 잡아줄 거야?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "잡아줄게"
+            },
+            {
+              "value": "maybe",
+              "label": "조금은"
+            },
+            {
+              "value": "no",
+              "label": "물부터 줄게"
+            }
+          ],
+          "matchMessage": "취한 손, 놓지 않기로.",
+          "followUp": "대신 술은 조금만."
+        },
+        {
+          "id": "p2-14",
           "question": "우리 다음 만남, 내가 정하는 대로 따라올래?",
           "options": [
             {
@@ -499,111 +599,11 @@
             },
             {
               "value": "no",
-              "label": "내가 정할래"
+              "label": "같이 정하자"
             }
           ],
           "matchMessage": "다음 만남, 나를 믿고 따라오기로.",
           "followUp": "토요일 오후, 비워둬."
-        },
-        {
-          "id": "p2-10",
-          "question": "새벽에 갑자기 전화해도 받아줄 거야?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "받을게"
-            },
-            {
-              "value": "maybe",
-              "label": "한 번은"
-            },
-            {
-              "value": "no",
-              "label": "문자로 해"
-            }
-          ],
-          "matchMessage": "새벽 전화, 받아주기로.",
-          "followUp": "오늘 밤 한 번, 걸어봐."
-        },
-        {
-          "id": "p2-11",
-          "question": "오늘은 좀 늦게 들어가도 돼?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "그래"
-            },
-            {
-              "value": "maybe",
-              "label": "조금만"
-            },
-            {
-              "value": "no",
-              "label": "안 돼"
-            }
-          ],
-          "matchMessage": "오늘은 조금 늦게 들어가기로.",
-          "followUp": "집에 가는 길, 천천히 걸어."
-        },
-        {
-          "id": "p2-12",
-          "question": "내 옷 입고 자도 돼?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "입어도 돼"
-            },
-            {
-              "value": "maybe",
-              "label": "한 번만"
-            },
-            {
-              "value": "no",
-              "label": "그건 안 돼"
-            }
-          ],
-          "matchMessage": "내 옷, 입고 자도 된대.",
-          "followUp": "안 돌려줘도 돼."
-        },
-        {
-          "id": "p2-13",
-          "question": "손 잡은 채로 잠들어도 돼?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "잡고 있어"
-            },
-            {
-              "value": "maybe",
-              "label": "더우면"
-            },
-            {
-              "value": "no",
-              "label": "각자 편하게"
-            }
-          ],
-          "matchMessage": "손 잡은 채로 잠들기로.",
-          "followUp": "먼저 잡는 쪽이 이기는 걸로."
-        },
-        {
-          "id": "p2-14",
-          "question": "내가 먼저 안아도, 밀어내지 않을 거지?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "안 밀어"
-            },
-            {
-              "value": "maybe",
-              "label": "조금 놀랄 듯"
-            },
-            {
-              "value": "no",
-              "label": "아직은"
-            }
-          ],
-          "matchMessage": "먼저 안아도, 괜찮대.",
-          "followUp": "헤어지기 전에, 한 번."
         },
         {
           "id": "p2-15",
@@ -630,97 +630,37 @@
     {
       "id": "pack3",
       "title": "우리 둘 이야기",
-      "subtitle": "오래 만나도 설레는 것들, 애정 표현, 서운함 풀기",
+      "subtitle": "슬슬 마음 확인하고 싶을 때, 질투·서운함·다음 단계",
       "sku": "secret-five-pack3",
       "price_krw": 1100,
       "questions": [
         {
           "id": "p3-01",
-          "question": "요즘도 내 옷차림에 눈 한 번 더 가?",
+          "question": "내가 다른 사람이랑 둘이 밥 먹는다 하면 솔직히 신경 쓰여?",
           "options": [
             {
               "value": "yes",
-              "label": "한 번 더 가"
+              "label": "신경 쓰여"
             },
             {
               "value": "maybe",
-              "label": "가끔"
+              "label": "조금"
             },
             {
               "value": "no",
-              "label": "잘 안 가"
+              "label": "안 쓰여"
             }
           ],
-          "matchMessage": "오늘도 서로 한 번 더 봤대.",
-          "followUp": "다음 데이트, 뭐 입을지 물어봐."
+          "matchMessage": "둘이 밥, 신경 쓰인대.",
+          "followUp": "그 얘긴 굳이 더 안 꺼낼게."
         },
         {
           "id": "p3-02",
-          "question": "내가 먼저 애정 표현하는 거, 더 해줬으면 해?",
+          "question": "내가 누구랑 친해 보이면, 은근히 신경 쓰여?",
           "options": [
             {
               "value": "yes",
-              "label": "더 해줘"
-            },
-            {
-              "value": "maybe",
-              "label": "가끔이면 돼"
-            },
-            {
-              "value": "no",
-              "label": "지금 그대로"
-            }
-          ],
-          "matchMessage": "애정 표현, 조금 더 하기로.",
-          "followUp": "오늘 한 번, 말보다 먼저 안아줘."
-        },
-        {
-          "id": "p3-03",
-          "question": "요즘 내가 아쉬운 순간 있으면, 말해줄래?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "말할게"
-            },
-            {
-              "value": "maybe",
-              "label": "생각나면"
-            },
-            {
-              "value": "no",
-              "label": "지금은 없어"
-            }
-          ],
-          "matchMessage": "아쉬운 건 숨기지 않기로.",
-          "followUp": "오늘 하나만, 조용히 말해줘."
-        },
-        {
-          "id": "p3-04",
-          "question": "싸우고 나서, 먼저 안아주는 쪽이 되고 싶어?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "내가 먼저"
-            },
-            {
-              "value": "maybe",
-              "label": "번갈아"
-            },
-            {
-              "value": "no",
-              "label": "말로 풀래"
-            }
-          ],
-          "matchMessage": "싸우면 먼저 안아주기로.",
-          "followUp": "다음엔 10분 뒤, 말 없이."
-        },
-        {
-          "id": "p3-05",
-          "question": "우리 닮아가는 습관, 하나 떠올라?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "떠올라"
+              "label": "쓰여"
             },
             {
               "value": "maybe",
@@ -728,99 +668,79 @@
             },
             {
               "value": "no",
-              "label": "아직 몰라"
+              "label": "안 쓰여"
             }
           ],
-          "matchMessage": "어느새 서로 닮았대.",
-          "followUp": "오늘 그 습관, 서로 짚어봐."
+          "matchMessage": "친해 보이면 신경 쓰인대.",
+          "followUp": "다음엔 먼저 말해줘."
+        },
+        {
+          "id": "p3-03",
+          "question": "지금 나 말고 연락하는 사람, 따로 없지?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "너뿐이야"
+            },
+            {
+              "value": "maybe",
+              "label": "지금은 너"
+            },
+            {
+              "value": "no",
+              "label": "있어"
+            }
+          ],
+          "matchMessage": "지금은 서로 하나뿐이래.",
+          "followUp": "오늘은 그 말, 그대로 믿을게."
+        },
+        {
+          "id": "p3-04",
+          "question": "내 연락이 하루 없으면, 먼저 궁금해져?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "궁금해져"
+            },
+            {
+              "value": "maybe",
+              "label": "조금"
+            },
+            {
+              "value": "no",
+              "label": "기다려"
+            }
+          ],
+          "matchMessage": "하루 없으면 궁금해진대.",
+          "followUp": "내일은 내가 먼저 톡할게."
+        },
+        {
+          "id": "p3-05",
+          "question": "내가 다른 사람 얘기 꺼내면, 듣기 싫어?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "듣기 싫어"
+            },
+            {
+              "value": "maybe",
+              "label": "좀 그래"
+            },
+            {
+              "value": "no",
+              "label": "괜찮아"
+            }
+          ],
+          "matchMessage": "다른 사람 얘기, 둘 다 싫대.",
+          "followUp": "그 얘긴 오늘로 끝내자."
         },
         {
           "id": "p3-06",
-          "question": "데이트 코스, 가끔은 내가 정해도 될까?",
+          "question": "내가 서운한 티 내면, 눈치챌 자신 있어?",
           "options": [
             {
               "value": "yes",
-              "label": "정해줘"
-            },
-            {
-              "value": "maybe",
-              "label": "번갈아"
-            },
-            {
-              "value": "no",
-              "label": "내가 좋아하는 데로"
-            }
-          ],
-          "matchMessage": "데이트, 이제 번갈아 정하기로.",
-          "followUp": "이번 주는 내가, 다음은 너."
-        },
-        {
-          "id": "p3-07",
-          "question": "연락 템포, 지금보다 조금 더 붙어도 돼?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "더 붙자"
-            },
-            {
-              "value": "maybe",
-              "label": "지금도 좋아"
-            },
-            {
-              "value": "no",
-              "label": "숨 쉴 틈도"
-            }
-          ],
-          "matchMessage": "연락, 조금 더 붙기로.",
-          "followUp": "오늘부터 하루 한 번, 먼저."
-        },
-        {
-          "id": "p3-08",
-          "question": "내가 힘들 때, 말 없이 안아주면 돼?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "그렇게 해줘"
-            },
-            {
-              "value": "maybe",
-              "label": "말해줘도"
-            },
-            {
-              "value": "no",
-              "label": "혼자 있고 싶어"
-            }
-          ],
-          "matchMessage": "힘들 땐 안아주기로.",
-          "followUp": "오늘 힘들면, 말 대신 손."
-        },
-        {
-          "id": "p3-09",
-          "question": "우리 일 년 뒤에도 지금 같자고 해도 돼?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "그래"
-            },
-            {
-              "value": "maybe",
-              "label": "천천히"
-            },
-            {
-              "value": "no",
-              "label": "지금은 아냐"
-            }
-          ],
-          "matchMessage": "일 년 뒤도 지금 같기로.",
-          "followUp": "오늘 한 장면, 사진으로 남겨."
-        },
-        {
-          "id": "p3-10",
-          "question": "내가 서운한데 말 안 하면, 알아채줄 수 있어?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "알아챌게"
+              "label": "눈치챌게"
             },
             {
               "value": "maybe",
@@ -828,39 +748,79 @@
             },
             {
               "value": "no",
-              "label": "잘 모르겠어"
+              "label": "잘 몰라"
             }
           ],
-          "matchMessage": "서운함, 먼저 알아채기로.",
-          "followUp": "대신 말할 땐, 바로 말해줘."
+          "matchMessage": "서운한 티, 알아채기로.",
+          "followUp": "대신 말로도 한 번 해줘."
         },
         {
-          "id": "p3-11",
-          "question": "오늘 하루 중 나 생각난 순간, 하나 말해줄래?",
+          "id": "p3-07",
+          "question": "우리 사이, 남들한테는 비밀로 하는 게 좋아?",
           "options": [
             {
               "value": "yes",
-              "label": "말할게"
+              "label": "비밀로"
             },
             {
               "value": "maybe",
-              "label": "한 번쯤"
+              "label": "둘만 알자"
             },
             {
               "value": "no",
-              "label": "딱히 없어"
+              "label": "말해도 돼"
             }
           ],
-          "matchMessage": "오늘, 서로 생각난 순간 있대.",
-          "followUp": "그 순간, 지금 말해줘."
+          "matchMessage": "우리 사이, 둘만 아는 걸로.",
+          "followUp": "다음에 물으면 웃어넘겨."
         },
         {
-          "id": "p3-12",
-          "question": "내가 다른 사람 얘기 물어보는 거, 신경 쓰여?",
+          "id": "p3-08",
+          "question": "주변에서 우리 사귀냐고 물으면, 부정하고 싶어?",
           "options": [
             {
               "value": "yes",
-              "label": "조금 쓰여"
+              "label": "부정하고 싶어"
+            },
+            {
+              "value": "maybe",
+              "label": "애매하게"
+            },
+            {
+              "value": "no",
+              "label": "그냥 아니라고"
+            }
+          ],
+          "matchMessage": "사귀냐는 말, 부정하기 싫대.",
+          "followUp": "다음엔 대답 대신 웃어."
+        },
+        {
+          "id": "p3-09",
+          "question": "내가 먼저 고백한다면, 받아줄 거야?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "받아줄게"
+            },
+            {
+              "value": "maybe",
+              "label": "천천히"
+            },
+            {
+              "value": "no",
+              "label": "아직은 아냐"
+            }
+          ],
+          "matchMessage": "내 고백, 받아주기로.",
+          "followUp": "그럼 오늘, 조용한 데서."
+        },
+        {
+          "id": "p3-10",
+          "question": "나랑 사귀면 어떤지, 한 번쯤 상상해 본 적 있어?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "해봤어"
             },
             {
               "value": "maybe",
@@ -868,15 +828,75 @@
             },
             {
               "value": "no",
+              "label": "안 해봤어"
+            }
+          ],
+          "matchMessage": "사귀면 어떨지 상상해봤대.",
+          "followUp": "다음엔 상상 말고 진짜로."
+        },
+        {
+          "id": "p3-11",
+          "question": "내가 다른 사람 만나는 거, 상상만 해도 기분 나빠?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "나빠"
+            },
+            {
+              "value": "maybe",
+              "label": "좀 그래"
+            },
+            {
+              "value": "no",
               "label": "괜찮아"
             }
           ],
-          "matchMessage": "질투, 서로 조금은 있대.",
-          "followUp": "그 얘긴 굳이 꺼내지 말자."
+          "matchMessage": "상상만 해도 기분 나쁘대.",
+          "followUp": "그럼 서로 그 선은 지키자."
+        },
+        {
+          "id": "p3-12",
+          "question": "내가 아프다 하면, 제일 먼저 달려와줄 거야?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "달려갈게"
+            },
+            {
+              "value": "maybe",
+              "label": "상황 봐서"
+            },
+            {
+              "value": "no",
+              "label": "연락부터"
+            }
+          ],
+          "matchMessage": "아프면 제일 먼저 달려온대.",
+          "followUp": "다음엔 진짜 아픈 척해볼게."
         },
         {
           "id": "p3-13",
-          "question": "둘만의 장소, 하나쯤 만들어볼래?",
+          "question": "내 생일, 따로 챙겨줄 생각 있어?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "챙길게"
+            },
+            {
+              "value": "maybe",
+              "label": "뭐 해줄까"
+            },
+            {
+              "value": "no",
+              "label": "그날은 몰라"
+            }
+          ],
+          "matchMessage": "생일, 서로 챙기기로.",
+          "followUp": "날짜 하나, 지금 알려줘."
+        },
+        {
+          "id": "p3-14",
+          "question": "우리 둘만 아는 장소, 하나 만들고 싶어?",
           "options": [
             {
               "value": "yes",
@@ -895,12 +915,12 @@
           "followUp": "다음 데이트는 거기로."
         },
         {
-          "id": "p3-14",
-          "question": "지금 우리, 더 가까워지고 있다고 느껴?",
+          "id": "p3-15",
+          "question": "혹시 나, 너한테 특별한 사람이야?",
           "options": [
             {
               "value": "yes",
-              "label": "느껴"
+              "label": "특별해"
             },
             {
               "value": "maybe",
@@ -908,268 +928,68 @@
             },
             {
               "value": "no",
-              "label": "글쎄"
+              "label": "아직은"
             }
           ],
-          "matchMessage": "우리, 조금씩 가까워지는 중.",
-          "followUp": "오늘은 어제보다 한 걸음."
-        },
-        {
-          "id": "p3-15",
-          "question": "고맙다는 말, 내가 더 해도 될까?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "더 해줘"
-            },
-            {
-              "value": "maybe",
-              "label": "지금도 좋아"
-            },
-            {
-              "value": "no",
-              "label": "말보다 행동"
-            }
-          ],
-          "matchMessage": "고맙다는 말, 더 하기로.",
-          "followUp": "오늘 하나, 구체적으로."
+          "matchMessage": "서로 특별한 사람이래.",
+          "followUp": "그 말, 오늘 한 번 더 해줘."
         }
       ]
     },
     {
       "id": "pack4",
-      "title": "둘만의 밤 · 19+",
-      "subtitle": "무드 있는 밤, 스킨십, 외박까지",
+      "title": "아슬아슬한 밤",
+      "subtitle": "늦은 밤 헤어지기 아쉬운 순간, 고백 직전의 텐션",
       "sku": "secret-five-pack4",
       "price_krw": 1496,
       "questions": [
         {
           "id": "p4-01",
-          "question": "오늘 우리 집에서 영화 한 편, 늦게까지 볼래?",
+          "question": "오늘 헤어지기 전에, 한 시간만 더 있어도 돼?",
           "options": [
             {
               "value": "yes",
-              "label": "좋아, 갈게"
+              "label": "한 시간 더"
             },
             {
               "value": "maybe",
-              "label": "생각해볼게"
+              "label": "짧게"
             },
             {
               "value": "no",
               "label": "다음에"
             }
           ],
-          "matchMessage": "영화 한 편, 둘 다 좋대.",
-          "followUp": "시간은 늦게, 다음 날은 비워."
+          "matchMessage": "오늘은 한 시간 더, 같이 있기로.",
+          "followUp": "다음엔 두 시간으로 늘려보자."
         },
         {
           "id": "p4-02",
-          "question": "오늘 밤, 좀 더 가까이 있어도 돼?",
+          "question": "늦은 밤에 내 톡 오면, 일부러 안 자고 기다려?",
           "options": [
             {
               "value": "yes",
-              "label": "가까이 와"
+              "label": "기다려"
             },
             {
               "value": "maybe",
-              "label": "천천히"
+              "label": "가끔"
             },
             {
               "value": "no",
-              "label": "오늘은 여기까지"
+              "label": "그냥 자"
             }
           ],
-          "matchMessage": "오늘 밤은 조금 더 가까이.",
-          "followUp": "대신 말로 해, 더 가까이라고."
+          "matchMessage": "늦은 밤 톡, 서로 기다린대.",
+          "followUp": "오늘 밤, 한 번 먼저 보내봐."
         },
         {
           "id": "p4-03",
-          "question": "불 끄고 나란히 누워 얘기하는 거, 좋아?",
+          "question": "집 앞까지 데려다주고 헤어지면, 조금 아쉬워?",
           "options": [
             {
               "value": "yes",
-              "label": "좋아"
-            },
-            {
-              "value": "maybe",
-              "label": "피곤하면"
-            },
-            {
-              "value": "no",
-              "label": "그냥 자자"
-            }
-          ],
-          "matchMessage": "불 끄고 하는 얘기, 둘 다 좋대.",
-          "followUp": "오늘은 10분만, 나머지는 내일."
-        },
-        {
-          "id": "p4-04",
-          "question": "잠들 때까지 손 잡고 있어도 돼?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "잡고 있어"
-            },
-            {
-              "value": "maybe",
-              "label": "더우면"
-            },
-            {
-              "value": "no",
-              "label": "각자 편하게"
-            }
-          ],
-          "matchMessage": "잠들 때까지 손, 놓지 않기로.",
-          "followUp": "아침에 누가 먼저 놓는지 보자."
-        },
-        {
-          "id": "p4-05",
-          "question": "아침에 눈 뜨자마자 안아도 돼?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "안아줘"
-            },
-            {
-              "value": "maybe",
-              "label": "일어나면"
-            },
-            {
-              "value": "no",
-              "label": "천천히"
-            }
-          ],
-          "matchMessage": "아침에 먼저 안아도 된대.",
-          "followUp": "말 대신 3초, 그걸로 시작."
-        },
-        {
-          "id": "p4-06",
-          "question": "목에 입 맞춰도 돼?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "돼"
-            },
-            {
-              "value": "maybe",
-              "label": "조금 부담"
-            },
-            {
-              "value": "no",
-              "label": "이건 패스"
-            }
-          ],
-          "matchMessage": "목에 입 맞춰도 된대.",
-          "followUp": "천천히, 급할 거 없어."
-        },
-        {
-          "id": "p4-07",
-          "question": "샤워하고 나온 너한테 뽀뽀해도 돼?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "해도 돼"
-            },
-            {
-              "value": "maybe",
-              "label": "놀랄 듯"
-            },
-            {
-              "value": "no",
-              "label": "거기까진"
-            }
-          ],
-          "matchMessage": "샤워 후 뽀뽀, 허락됐대.",
-          "followUp": "문 열고 나오면, 바로."
-        },
-        {
-          "id": "p4-08",
-          "question": "오늘은 그냥 안 돌아가도 돼?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "그럴게"
-            },
-            {
-              "value": "maybe",
-              "label": "고민돼"
-            },
-            {
-              "value": "no",
-              "label": "돌아갈게"
-            }
-          ],
-          "matchMessage": "오늘은 안 돌아가도 된대.",
-          "followUp": "내일 첫차는 내가 알아볼게."
-        },
-        {
-          "id": "p4-09",
-          "question": "다음엔 하루 종일 둘만 있어볼래?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "그래"
-            },
-            {
-              "value": "maybe",
-              "label": "날 봐서"
-            },
-            {
-              "value": "no",
-              "label": "밖이 좋아"
-            }
-          ],
-          "matchMessage": "하루 종일 둘만, 좋대.",
-          "followUp": "다음 주말, 밖엔 안 나가기로."
-        },
-        {
-          "id": "p4-10",
-          "question": "오늘 밤, 내가 먼저 시작해도 돼?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "먼저 해줘"
-            },
-            {
-              "value": "maybe",
-              "label": "기다릴게"
-            },
-            {
-              "value": "no",
-              "label": "오늘은 아냐"
-            }
-          ],
-          "matchMessage": "오늘은 내가 먼저 해도 된대.",
-          "followUp": "네가 멈추면, 나도 멈출게."
-        },
-        {
-          "id": "p4-11",
-          "question": "취했을 때 선, 미리 정해둘래?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "정해두자"
-            },
-            {
-              "value": "maybe",
-              "label": "얘기해보자"
-            },
-            {
-              "value": "no",
-              "label": "그건 됐어"
-            }
-          ],
-          "matchMessage": "선은 미리 정해두기로.",
-          "followUp": "취했을 땐 여기까지, 지킬게."
-        },
-        {
-          "id": "p4-12",
-          "question": "잠옷 차림으로 마주 앉아도 어색하지 않아?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "괜찮아"
+              "label": "아쉬워"
             },
             {
               "value": "maybe",
@@ -1177,15 +997,155 @@
             },
             {
               "value": "no",
-              "label": "어색해"
+              "label": "괜찮아"
             }
           ],
-          "matchMessage": "잠옷 차림, 어색하지 않대.",
-          "followUp": "그럼 오늘은 불 다 켜두자."
+          "matchMessage": "집 앞 헤어짐, 둘 다 아쉽대.",
+          "followUp": "다음엔 한 블록 더 걸어."
         },
         {
-          "id": "p4-13",
-          "question": "우리 같이 맞는 아침, 상상해본 적 있어?",
+          "id": "p4-04",
+          "question": "자정 넘어까지 통화해도, 다음 날 괜찮아?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "괜찮아"
+            },
+            {
+              "value": "maybe",
+              "label": "가끔은"
+            },
+            {
+              "value": "no",
+              "label": "일찍 잘래"
+            }
+          ],
+          "matchMessage": "자정 넘는 통화, 둘 다 괜찮대.",
+          "followUp": "오늘 밤 12시, 먼저 걸어."
+        },
+        {
+          "id": "p4-05",
+          "question": "우리 둘만 있으면, 괜히 말수가 줄어?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "줄어"
+            },
+            {
+              "value": "maybe",
+              "label": "가끔"
+            },
+            {
+              "value": "no",
+              "label": "말 많아"
+            }
+          ],
+          "matchMessage": "둘만 있으면 말수가 줄어든대.",
+          "followUp": "그 침묵, 일부러 안 깨도 돼."
+        },
+        {
+          "id": "p4-06",
+          "question": "어두운 길에서 내가 옆에 있으면, 안심돼?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "안심돼"
+            },
+            {
+              "value": "maybe",
+              "label": "조금"
+            },
+            {
+              "value": "no",
+              "label": "혼자서도"
+            }
+          ],
+          "matchMessage": "어두운 길, 서로 안심된대.",
+          "followUp": "다음엔 내가 안쪽으로 걸을게."
+        },
+        {
+          "id": "p4-07",
+          "question": "내 목소리 듣고 싶어서, 밤에 전화한 적 있어?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "있어"
+            },
+            {
+              "value": "maybe",
+              "label": "한 번쯤"
+            },
+            {
+              "value": "no",
+              "label": "없어"
+            }
+          ],
+          "matchMessage": "밤에 목소리 듣고 싶었대.",
+          "followUp": "오늘 밤, 그 목소리로 한 번."
+        },
+        {
+          "id": "p4-08",
+          "question": "오늘 밤, 나한테 아직 하고 싶은 말 남아 있어?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "남아 있어"
+            },
+            {
+              "value": "maybe",
+              "label": "조금"
+            },
+            {
+              "value": "no",
+              "label": "다 했어"
+            }
+          ],
+          "matchMessage": "오늘 밤, 아직 할 말이 남았대.",
+          "followUp": "그 말, 끊기 전에 해줘."
+        },
+        {
+          "id": "p4-09",
+          "question": "헤어지고 집에 도착하면, 잘 들어갔다는 톡 기다려?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "기다려"
+            },
+            {
+              "value": "maybe",
+              "label": "보내줘"
+            },
+            {
+              "value": "no",
+              "label": "안 보내도 돼"
+            }
+          ],
+          "matchMessage": "집 도착 톡, 서로 기다린대.",
+          "followUp": "오늘은 도착하면 바로."
+        },
+        {
+          "id": "p4-10",
+          "question": "오늘 밤, 나한테 더 알고 싶은 거 있어?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "있어"
+            },
+            {
+              "value": "maybe",
+              "label": "조금"
+            },
+            {
+              "value": "no",
+              "label": "다 알어"
+            }
+          ],
+          "matchMessage": "오늘 밤, 서로 더 알고 싶대.",
+          "followUp": "질문 하나, 지금 해봐."
+        },
+        {
+          "id": "p4-11",
+          "question": "우리 둘만의 시간, 한 번쯤 상상해 본 적 있어?",
           "options": [
             {
               "value": "yes",
@@ -1197,15 +1157,75 @@
             },
             {
               "value": "no",
-              "label": "안 해봤어"
+              "label": "아직"
             }
           ],
-          "matchMessage": "같이 맞는 아침, 상상해봤대.",
+          "matchMessage": "둘만의 시간, 상상해봤대.",
           "followUp": "다음엔 상상 말고 진짜로."
         },
         {
+          "id": "p4-12",
+          "question": "늦게 헤어지고 나면, 다음 날 아침에 제일 먼저 연락해?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "내가 먼저"
+            },
+            {
+              "value": "maybe",
+              "label": "가끔"
+            },
+            {
+              "value": "no",
+              "label": "네가 먼저"
+            }
+          ],
+          "matchMessage": "늦은 헤어짐 다음 날, 먼저 연락한대.",
+          "followUp": "내일 아침, 그 순서 지키기."
+        },
+        {
+          "id": "p4-13",
+          "question": "오늘은 평소보다 조금 더 늦게 헤어져도 돼?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "좋아"
+            },
+            {
+              "value": "maybe",
+              "label": "조금만"
+            },
+            {
+              "value": "no",
+              "label": "일찍 헤어지자"
+            }
+          ],
+          "matchMessage": "오늘은 조금 늦게 헤어지기로.",
+          "followUp": "그 대신 내일 조금 더 일찍."
+        },
+        {
           "id": "p4-14",
-          "question": "아침에 내가 먼저 좋아한다고 말해도 돼?",
+          "question": "내가 조용히 손만 잡고 있으면, 말 안 해도 알아?",
+          "options": [
+            {
+              "value": "yes",
+              "label": "알아"
+            },
+            {
+              "value": "maybe",
+              "label": "노력할게"
+            },
+            {
+              "value": "no",
+              "label": "말해줘"
+            }
+          ],
+          "matchMessage": "말 없이 손만 잡아도 통한대.",
+          "followUp": "오늘은 말 대신 손으로."
+        },
+        {
+          "id": "p4-15",
+          "question": "오늘 밤 내가 먼저 '좋아한다' 말해도 돼?",
           "options": [
             {
               "value": "yes",
@@ -1213,35 +1233,15 @@
             },
             {
               "value": "maybe",
-              "label": "눈으로"
+              "label": "눈으로 해줘"
             },
             {
               "value": "no",
-              "label": "지금은 아냐"
+              "label": "조금만 기다려"
             }
           ],
-          "matchMessage": "아침에 먼저 말해도 된대.",
-          "followUp": "눈 뜨자마자, 한 번."
-        },
-        {
-          "id": "p4-15",
-          "question": "오늘 밤은 불을 좀 낮춰도 돼?",
-          "options": [
-            {
-              "value": "yes",
-              "label": "낮춰도 돼"
-            },
-            {
-              "value": "maybe",
-              "label": "그대로"
-            },
-            {
-              "value": "no",
-              "label": "켜둘래"
-            }
-          ],
-          "matchMessage": "오늘 밤은 불을 낮추기로.",
-          "followUp": "어둠은 천천히, 익숙해질 때까지."
+          "matchMessage": "오늘 밤, 먼저 말해도 된대.",
+          "followUp": "끊기 전에, 한 번만."
         }
       ]
     }

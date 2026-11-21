@@ -52,20 +52,20 @@ describe("카드 문구 정책", () => {
     expect(new Set(all.map((q) => q.id)).size).toBe(60);
     expect(new Set(all.map((q) => q.question)).size).toBe(60);
   });
-  it("팩 제목은 설렘의 온도차를 드러낸다", () => {
+  it("팩 제목은 썸의 온도차를 드러낸다", () => {
     expect(packs.map((p) => p.title)).toEqual([
       "설렘의 시작",
       "심장 간질간질",
       "우리 둘 이야기",
-      "둘만의 밤 · 19+",
+      "아슬아슬한 밤",
     ]);
   });
-  it("성인 팩은 심의에서 문제 되는 노골적 표현 없이 수위와 허락만 묻는다", () => {
-    const adult = packs.find((p) => p.id === "pack4")!;
-    expect(adult.title).toContain("19+");
-    for (const q of adult.questions)
-      expect(q.question + " " + q.matchMessage + " " + q.followUp).not.toMatch(
-        /섹스|성관계|정사|나체|알몸|벗겨|삽입|오르가즘|야한/,
+  it("노골적 표현과 잠자리 유도 문구를 60문항 어디에도 쓰지 않는다", () => {
+    for (const q of all)
+      expect(q.question + " " + shown(q)).not.toMatch(
+        /섹스|성관계|정사|나체|알몸|벗겨|삽입|오르가즘|야한|자고 갈래|자고 갈까|자고 가|집에 안 가|집에 안 들|외박|원나잇|모텔|호텔|잠자리|스킨십|하룻밤|19\+|19금/,
       );
+    const last = packs.find((p) => p.id === "pack4")!;
+    expect(last.title + " " + last.subtitle).not.toMatch(/19|성인|야한/);
   });
 });
