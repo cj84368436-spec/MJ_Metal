@@ -14,6 +14,7 @@ import {
 import { Pack, packs, price, ownsPack } from "./domain";
 import { owned } from "./store";
 import { reduced } from "./bridge";
+import { asset } from "./paths";
 
 const situations = [
   ["썸 탈 때", 0, 7],
@@ -34,7 +35,7 @@ export function Fan() {
       <i className="glint g1">✦</i>
       <i className="glint g2">✦</i>
       <i className="glint g3">✧</i>
-      <img src="/art/fan.webp" alt="" />
+      <img src={asset("art/fan.webp")} alt="" />
     </div>
   );
 }
@@ -252,7 +253,7 @@ export function Home({
               }}
             >
               <span className={"thumb " + p.id}>
-                <img src={"/art/" + p.id + ".webp"} alt="" />
+                <img src={asset("art/" + p.id + ".webp")} alt="" />
               </span>
               <span className="pack-info">
                 <span className="pack-title">{p.title}</span>

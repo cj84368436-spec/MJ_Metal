@@ -1,3 +1,4 @@
+import { appRoute, browserPath } from "./paths";
 import {
   closeView,
   generateHapticFeedback,
@@ -49,7 +50,7 @@ export function installBridge(back: () => void) {
   return () => releases.forEach((fn) => fn());
 }
 export function initialPath() {
-  if (native && location.pathname === "/" && !location.search) {
+  if (native && appRoute(location.pathname, location.search) === "/") {
     try {
       const url = new URL(getSchemeUri());
       if (/^\/r\/[a-z0-9]{8}$/.test(url.pathname))
@@ -78,5 +79,5 @@ export async function inviteURL(route: string, shared: boolean) {
       return scheme;
     }
   }
-  return location.origin + route;
+  return location.origin + browserPath(route);
 }

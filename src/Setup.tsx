@@ -3,6 +3,7 @@ import { ArrowRight, Check, Hand, Shuffle, X } from "lucide-react";
 import { Pack, price, selectFive } from "./domain";
 import { recent } from "./store";
 import { buzz, reduced } from "./bridge";
+import { asset } from "./paths";
 
 export function Setup({
   pack,
@@ -16,7 +17,7 @@ export function Setup({
   return (
     <section className="flow">
       <div className="flow-art">
-        <img src={"/art/" + pack.id + ".webp"} alt="" />
+        <img src={asset("art/" + pack.id + ".webp")} alt="" />
       </div>
       <span className="eyebrow">
         {pack.title} · {price(pack)}

@@ -19,6 +19,7 @@ import {
 } from "./domain";
 import { createRoom, myRooms, owned, pay, syncPasses } from "./store";
 import { buzz, initialPath, installBridge, leave, native } from "./bridge";
+import { asset, browserPath, currentRoute } from "./paths";
 import { available, Home } from "./Home";
 import { Setup, Purchase } from "./Setup";
 import { CardStack } from "./CardStack";
@@ -32,9 +33,9 @@ type Draft = {
   answers: Answer[];
   room?: string;
 };
-const route = () => location.pathname + location.search;
+const route = currentRoute;
 const initial = initialPath();
-if (initial) history.replaceState(null, "", initial);
+if (initial) history.replaceState(null, "", browserPath(initial));
 
 function Demo({ pack, start }: { pack: Pack; start: () => void }) {
   const [ids] = useState(() => selectFive(pack, []));
@@ -60,7 +61,7 @@ function Demo({ pack, start }: { pack: Pack; start: () => void }) {
     <section className="flow center">
       <span className="eyebrow">예시 · {pack.title}</span>
       <div className="flow-art">
-        <img src={"/art/" + pack.id + ".webp"} alt="" />
+        <img src={asset("art/" + pack.id + ".webp")} alt="" />
       </div>
       <h1>둘 다 좋아하면 어떻게 열릴까요?</h1>
       <p>다섯 장 중 세 장을 함께 고른 예시예요.</p>
@@ -88,7 +89,7 @@ function Library({ go }: { go: (u: string) => void }) {
             key={r.id}
             onClick={() => go("/r/" + r.id)}
           >
-            <img src={"/art/" + r.pack.id + ".webp"} alt="" />
+            <img src={asset("art/" + r.pack.id + ".webp")} alt="" />
             <span>
               <b>{r.pack.title}</b>
               <small>
@@ -129,7 +130,7 @@ function App() {
     history[replace ? "replaceState" : "pushState"](
       { inside: true },
       "",
-      destination,
+      browserPath(destination),
     );
     setPath(route());
     setPurchase(false);
@@ -143,7 +144,7 @@ function App() {
         ?.dispatchEvent(new Event("cancel", { cancelable: true }));
       return;
     }
-    if (location.pathname === "/" && !location.search) {
+    if (route() === "/") {
       leave();
       return;
     }

@@ -7,6 +7,7 @@
     "dev": "vite --host 0.0.0.0",
     "test": "vitest run",
     "build:web": "tsc --noEmit && vite build",
+    "build:pages": "tsc --noEmit && vite build --base=/MJ_Metal/",
     "build": "npm run build:web && npm run build:ait",
     "build:ait": "ait build",
     "preview": "vite preview"

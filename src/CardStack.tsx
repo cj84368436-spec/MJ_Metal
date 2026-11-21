@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Check, RotateCcw } from "lucide-react";
 import { Answer, Pack, Question } from "./domain";
 import { buzz, reduced } from "./bridge";
+import { asset } from "./paths";
 
 const feedback = {
   yes: "tickMedium",
@@ -171,7 +172,7 @@ export function CardStack({
                 setDrag({ x: 0, y: 0 });
               }}
             >
-              <img draggable={false} src={"/art/" + pack.id + ".webp"} alt="" />
+              <img draggable={false} src={asset("art/" + pack.id + ".webp")} alt="" />
               <h1>{q.question}</h1>
               {Math.max(Math.abs(drag.x), Math.abs(drag.y)) > 57 && (
                 <b className="drag-label">
