@@ -21,7 +21,6 @@ export function CardFan({
           <p>{q.question}</p>
         </article>
       ))}
-      <i className="fan-shadow" />
     </div>
   );
 }
@@ -74,7 +73,7 @@ export function Home({
                 <small>{p.subtitle}</small>
               </span>
               <span className="pack-cost">
-                {isFree(p) ? "무료" : price(p)}
+                {isFree(p) ? "전부 무료" : "결과 " + price(p)}
                 {p === selected && <Check size={15} />}
               </span>
             </button>
