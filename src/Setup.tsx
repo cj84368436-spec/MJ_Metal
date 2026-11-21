@@ -3,7 +3,6 @@ import { ArrowRight, Check, Hand, Shuffle, X } from "lucide-react";
 import { Pack, price, selectFive } from "./domain";
 import { recent } from "./store";
 import { buzz, reduced } from "./bridge";
-import { asset } from "./paths";
 
 export function Setup({
   pack,
@@ -16,69 +15,74 @@ export function Setup({
   const [ids, setIds] = useState<string[]>([]);
   return (
     <section className="flow">
-      <div className="flow-art">
-        <img src={asset("art/" + pack.id + ".webp")} alt="" />
-      </div>
       <span className="eyebrow">
         {pack.title} · {price(pack)}
       </span>
-      <h1>{manual ? "직접 다섯 장을 골라요" : "어떤 카드로 시작할까요?"}</h1>
+      <h1>{manual ? "직접 다섯 장을 골라요" : "오늘의 다섯 장"}</h1>
       <p>
         {manual
-          ? ids.length + " / 5장 선택"
-          : "15문항 중 오늘 묻고 싶은 5장을 골라요."}
+          ? ids.length + " / 5장 골랐어요"
+          : "15장 중에서 오늘 묻고 싶은 다섯 장만 골라요."}
       </p>
       {pack.id === "pack4" && (
-        <small>19+ 성인 카드예요. 스킨십·외박처럼 말로 꺼내기 어려운 것만 담았어요.</small>
+        <p className="notice small">
+          19+ 성인 카드예요. 스킨십·외박처럼 말로 꺼내기 어려운 것만 담았어요.
+        </p>
       )}
       {!manual ? (
         <div className="actions">
           <button
-            className="primary"
+            className="cta"
             onClick={() => start(selectFive(pack, recent(pack)))}
           >
-            <Shuffle size={19} />
+            <Shuffle size={18} />
             랜덤으로 5장 뽑기
           </button>
-          <button className="secondary" onClick={() => setManual(true)}>
-            <Hand size={18} />
+          <button className="ghost" onClick={() => setManual(true)}>
+            <Hand size={17} />
             직접 고르기
           </button>
         </div>
       ) : (
         <>
-          <div className="manual panel">
-            {pack.questions.map((q) => (
-              <label
-                key={q.id}
-                className={
-                  !ids.includes(q.id) && ids.length === 5 ? "muted" : ""
-                }
-              >
-                <input
-                  type="checkbox"
-                  checked={ids.includes(q.id)}
-                  disabled={!ids.includes(q.id) && ids.length === 5}
-                  onChange={(e) =>
-                    setIds(
-                      e.target.checked
-                        ? [...ids, q.id]
-                        : ids.filter((id) => id !== q.id),
-                    )
+          <div className="manual">
+            {pack.questions.map((q) => {
+              const on = ids.includes(q.id);
+              return (
+                <label
+                  key={q.id}
+                  className={
+                    "pick" + (on ? " on" : "") + (!on && ids.length === 5 ? " muted" : "")
                   }
-                />
-                {q.question}
-              </label>
-            ))}
+                >
+                  <input
+                    type="checkbox"
+                    checked={on}
+                    disabled={!on && ids.length === 5}
+                    onChange={(e) =>
+                      setIds(
+                        e.target.checked
+                          ? [...ids, q.id]
+                          : ids.filter((id) => id !== q.id),
+                      )
+                    }
+                  />
+                  <span className="pick-box">
+                    {on && <Check size={14} />}
+                  </span>
+                  <span>{q.question}</span>
+                </label>
+              );
+            })}
           </div>
           <div className="dock">
             <button
-              className="primary"
+              className="cta"
               disabled={ids.length !== 5}
               onClick={() => start(ids)}
             >
               {ids.length === 5
-                ? "5장 골랐어요 · 시작하기"
+                ? "5장 골랐어요 · 답하러 가기"
                 : 5 - ids.length + "장 더 고르면 시작할 수 있어요"}
               <ArrowRight size={18} />
             </button>
@@ -132,13 +136,12 @@ export function Purchase({
       } catch (e) {
         granting.current = false;
         setError(
-          (e as Error).message ||
-            "이용권을 저장할 수 없어요. 다시 시도해주세요.",
+          (e as Error).message || "결과를 열 수 없어요. 다시 시도해주세요.",
         );
         setState("ready");
         buzz("error");
       }
-    }, 2000);
+    }, 1800);
   }
   return (
     <dialog
@@ -151,8 +154,8 @@ export function Purchase({
       }}
     >
       <div className="handle" />
-      <div className="section-title">
-        <span className="eyebrow">모의 인앱결제</span>
+      <div className="sheet-head">
+        <span className="eyebrow">결과 열기</span>
         <button
           aria-label="닫기"
           className="icon-btn"
@@ -162,33 +165,35 @@ export function Purchase({
           <X />
         </button>
       </div>
-      <h1 id="purchase-title">{pack.title} 팩 이용권</h1>
-      <h2>{price(pack)}</h2>
+      <h1 id="purchase-title">설레는 답 모두 열기</h1>
+      <p className="sheet-price">{price(pack)}</p>
       <ul className="benefits">
         {[
-          "이 팩 15문항 전체 이용",
-          "같은 팩으로 몇 번이든 방 만들기",
-          "함께 열린 카드의 심화 리포트와 다음 대화 문장",
+          "둘 다 좋다고 한 카드 전부",
+          "카드마다 이어질 한마디",
+          "이 결과, 일주일 동안 다시 보기",
         ].map((s) => (
           <li key={s}>
-            <Check size={17} />
+            <Check size={16} />
             {s}
           </li>
         ))}
       </ul>
-      <p className="notice">잠긴 카드는 상대의 답을 보여주지 않아요.</p>
+      <p className="notice small">
+        서로 다른 카드는 끝까지 비밀로 남아요. 상대의 답도 보이지 않아요.
+      </p>
       <button
-        className="primary"
+        className="cta"
         disabled={state !== "ready"}
         onClick={purchase}
       >
         {state === "paying"
-          ? "모의 결제 중…"
+          ? "여는 중…"
           : error
             ? "다시 시도"
-            : price(pack) + " 모의 결제하기"}
+            : price(pack) + "로 열기"}
       </button>
-      <small>실제 청구 없이 테스트 이용권을 저장해요.</small>
+      <small className="sheet-note">실제 청구 없이 테스트로 열어요.</small>
       {error && <p role="alert">{error}</p>}
     </dialog>
   );

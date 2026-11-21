@@ -14,19 +14,10 @@ function get<T>(key: string, fallback: T): T {
 function put(key: string, value: unknown) {
   localStorage.setItem(prefix + key, JSON.stringify(value));
 }
-function device() {
-  let id = get("device", "");
-  if (!id) {
-    id = mock.token();
-    put("device", id);
-  }
-  return id;
-}
 const messages: Record<string, string> = {
   INVALID_LINK: "초대 링크를 확인해주세요. 보낸 사람에게 다시 받아볼래요?",
   EXPIRED: "이 카드는 만료됐어요. 새 카드를 만들까요?",
   INVALID_NICK: "닉네임은 편안한 말로, 글자나 숫자 2~6자로 적어주세요.",
-  PACK_REQUIRED: "이 팩의 이용권을 먼저 열어주세요.",
   TEST_PURCHASE_DISABLED: "이 서버에서는 모의 결제가 꺼져 있어요.",
   TOO_MANY: "잠시 뒤 다시 시도해주세요.",
 };
@@ -54,17 +45,6 @@ async function rpc<T>(op: string, args: object): Promise<T> {
     );
   return data as T;
 }
-export const owned = () =>
-  shared ? get<string[]>("passes", []) : mock.owned();
-export async function syncPasses() {
-  if (shared)
-    put("passes", await rpc<string[]>("passes", { device: device() }));
-}
-export async function pay(p: Pack) {
-  if (!shared) return mock.pay(p);
-  await rpc("test_purchase", { device: device(), pack: p.id });
-  await syncPasses();
-}
 export const recent = (p: Pack) =>
   shared ? get<string[][]>("recent." + p.id, []) : mock.recent(p);
 type Credentials = { id: string; host: string; guest: string };
@@ -91,7 +71,7 @@ export async function createRoom(
   for (let attempt = 0; attempt < 3; attempt++) {
     sessionStorage.setItem(key, JSON.stringify(c));
     try {
-      await rpc("create", { ...c, ids, answers, pack: p.id, device: device() });
+      await rpc("create", { ...c, ids, answers, pack: p.id });
       break;
     } catch (e) {
       if ((e as { code?: string }).code !== "ID_COLLISION" || attempt === 2)
@@ -129,7 +109,15 @@ export function myRooms() {
     })
     .sort((a, b) => b.created - a.created);
 }
-export type RoomData = ReturnType<typeof mock.viewRoom>;
+export type RoomData = {
+  pack: Pack;
+  nick: string;
+  created: number;
+  guestToken: string;
+  unlocked: boolean;
+  questions: ReturnType<typeof mock.viewRoom>["questions"];
+  result: Result | null;
+};
 type Snapshot = {
   pack: string;
   nick: string;
@@ -137,17 +125,17 @@ type Snapshot = {
   matched: number | null;
   ids: string[] | null;
   opened: string[] | null;
+  unlocked: boolean;
 };
 export async function viewRoom(
   id: string,
   guest: string | null,
-  report: boolean,
 ): Promise<RoomData> {
   if (!shared) return mock.viewRoom(id, guest);
   const host = get<Entry | null>("host." + id, null);
   const token = guest ?? host?.host;
   if (!token) throw new Error(messages.INVALID_LINK);
-  const s = await rpc<Snapshot>("state", { id, token, report });
+  const s = await rpc<Snapshot>("state", { id, token });
   const pack = packs.find((p) => p.id === s.pack)!;
   const qs = (ids: string[] | null) =>
     (ids ?? []).map((qid) => pack.questions.find((q) => q.id === qid)!);
@@ -158,7 +146,8 @@ export async function viewRoom(
           matched: s.matched,
           percent: s.matched * 20,
           opened: qs(s.opened),
-          locked: 5 - (s.opened?.length ?? 0),
+          locked: s.matched - (s.opened?.length ?? 0),
+          sealed: 5 - s.matched,
         };
   if (host && !host.done && result) put("host." + id, { ...host, done: true });
   return {
@@ -166,10 +155,19 @@ export async function viewRoom(
     nick: s.nick,
     created: s.created,
     guestToken: guest ?? host!.guest,
+    unlocked: s.unlocked || pack.price_krw === 0,
     questions: qs(s.ids),
     result,
-    report: report ? result : null,
   };
+}
+/**
+ * 결과 잠금 해제. 화면의 모의 결제가 끝난 뒤에만 부른다.
+ * 실제 출시에서는 영수증 검증으로 바꿔야 하는 지점이다.
+ */
+export async function unlockRoom(id: string, guest: string | null) {
+  if (!shared) return mock.unlock(id, guest);
+  const token = guest ?? get<Entry | null>("host." + id, null)?.host;
+  await rpc("test_unlock", { id, token });
 }
 export async function setNickname(id: string, nick: string) {
   if (!shared) return mock.setNickname(id, nick);

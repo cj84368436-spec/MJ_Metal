@@ -1,27 +1,19 @@
 import { useCallback, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  Inbox,
-  Layers2,
-  LockKeyhole,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Inbox, LockKeyhole } from "lucide-react";
 import {
   Answer,
   matchCards,
   Pack,
   packs,
-  ownsPack,
   selectFive,
   validateFive,
 } from "./domain";
-import { createRoom, myRooms, owned, pay, syncPasses } from "./store";
+import { createRoom, myRooms } from "./store";
 import { buzz, initialPath, installBridge, leave, native } from "./bridge";
-import { asset, browserPath, currentRoute } from "./paths";
+import { browserPath, currentRoute } from "./paths";
 import { available, Home } from "./Home";
-import { Setup, Purchase } from "./Setup";
+import { Setup } from "./Setup";
 import { CardStack } from "./CardStack";
 import { Room } from "./Room";
 import { Results } from "./Results";
@@ -49,10 +41,10 @@ function Demo({ pack, start }: { pack: Pack; start: () => void }) {
           qs,
           ["yes", "maybe", "yes", "yes", "no"],
           ["yes", "yes", "yes", "yes", "maybe"],
-          false,
+          true,
         )}
+        unlocked
         demo
-        report={false}
         again={start}
         home={start}
       />
@@ -60,17 +52,14 @@ function Demo({ pack, start }: { pack: Pack; start: () => void }) {
   return (
     <section className="flow center">
       <span className="eyebrow">예시 · {pack.title}</span>
-      <div className="flow-art">
-        <img src={asset("art/" + pack.id + ".webp")} alt="" />
-      </div>
       <h1>둘 다 좋아하면 어떻게 열릴까요?</h1>
       <p>다섯 장 중 세 장을 함께 고른 예시예요.</p>
-      <div className="panel demo-list">
+      <div className="demo-list">
         {qs.map((q) => (
           <p key={q.id}>{q.question}</p>
         ))}
       </div>
-      <button className="primary" onClick={() => setShow(true)}>
+      <button className="cta" onClick={() => setShow(true)}>
         예시 결과 보기 <ArrowRight size={18} />
       </button>
     </section>
@@ -80,31 +69,34 @@ function Library({ go }: { go: (u: string) => void }) {
   const rooms = myRooms();
   return (
     <section className="flow">
+      <span className="eyebrow">최근 7일</span>
       <h1>내 카드함</h1>
-      <p>최근 7일 동안 내가 보낸 카드예요.</p>
+      <p>내가 보낸 카드예요. 상대가 답하면 결과가 열려요.</p>
       {rooms.length ? (
-        rooms.map((r) => (
+        rooms.map((r, i) => (
           <button
-            className="library-row panel"
+            className="library-row"
             key={r.id}
             onClick={() => go("/r/" + r.id)}
           >
-            <img src={asset("art/" + r.pack.id + ".webp")} alt="" />
-            <span>
+            <span className="lib-mark">
+              {String(available.indexOf(r.pack) + 1 || i + 1).padStart(2, "0")}
+            </span>
+            <span className="lib-copy">
               <b>{r.pack.title}</b>
               <small>
                 {r.id} · {new Date(r.created).toLocaleDateString("ko-KR")}
               </small>
             </span>
-            <em>{r.done ? "결과 보기" : "응답 대기"}</em>
+            <em>{r.done ? "결과 보기" : "기다리는 중"}</em>
             <ArrowRight size={16} />
           </button>
         ))
       ) : (
-        <div className="panel center empty">
-          <Inbox />
+        <div className="empty">
+          <Inbox size={22} />
           <h2>아직 보낸 카드가 없어요</h2>
-          <button className="primary" onClick={() => go("/")}>
+          <button className="cta" onClick={() => go("/")}>
             카드 5장 만들기
           </button>
         </div>
@@ -117,12 +109,6 @@ function App() {
   const [selected, setSelected] = useState(available[0]);
   const [, setRev] = useState(0);
   const [busy, setBusy] = useState(false);
-  useEffect(() => {
-    void syncPasses()
-      .then(() => setRev((v) => v + 1))
-      .catch(() => {});
-  }, []);
-  const [purchase, setPurchase] = useState(false);
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
   const url = new URL(path, location.origin);
@@ -133,7 +119,6 @@ function App() {
       browserPath(destination),
     );
     setPath(route());
-    setPurchase(false);
     setError("");
     window.scrollTo(0, 0);
   }, []);
@@ -154,7 +139,6 @@ function App() {
   useEffect(() => {
     const pop = () => {
       setPath(route());
-      setPurchase(false);
       setError("");
     };
     addEventListener("popstate", pop);
@@ -199,10 +183,7 @@ function App() {
       go("/r/" + draft.room, true);
       return;
     }
-    if (!ownsPack(owned(), pack)) {
-      setPurchase(true);
-      return;
-    }
+    // 보내기는 무료다. 결제는 결과 화면에서 잠금을 열 때만 일어난다.
     const id = await createRoom(pack, draft.ids, draft.answers, draftKey);
     update({ ...draft, room: id });
     go("/r/" + id, true);
@@ -234,7 +215,6 @@ function App() {
         selected={selected}
         onSelect={setSelected}
         start={() => start(selected)}
-        go={go}
       />
     );
   else if (url.pathname === "/" && step === "setup")
@@ -249,10 +229,7 @@ function App() {
       page = (
         <section className="flow panel">
           <h1>이미 봉인한 카드예요</h1>
-          <button
-            className="primary"
-            onClick={() => go("/r/" + draft.room, true)}
-          >
+          <button className="cta" onClick={() => go("/r/" + draft.room, true)}>
             내 방으로
           </button>
         </section>
@@ -285,7 +262,7 @@ function App() {
     page = (
       <section className="flow panel">
         <h1>링크를 확인해주세요</h1>
-        <button className="primary" onClick={() => go("/")}>
+        <button className="cta" onClick={() => go("/")}>
           홈으로
         </button>
       </section>
@@ -305,7 +282,7 @@ function App() {
             onClick={() => go("/")}
           >
             <span className="brand-symbol">
-              <LockKeyhole size={17} />
+              <LockKeyhole size={15} />
             </span>
             비밀 다섯 장
           </button>
@@ -314,14 +291,13 @@ function App() {
               className={!isLibrary ? "current" : ""}
               onClick={() => go("/")}
             >
-              <Layers2 size={16} />
               카드 홈
             </button>
             <button
               className={isLibrary ? "current" : ""}
               onClick={() => go("/library")}
             >
-              <Inbox size={16} />내 카드함
+              내 카드함
             </button>
           </nav>
         </div>
@@ -329,7 +305,7 @@ function App() {
       <main>
         {!home && !native && (
           <button className="back text-btn" onClick={back}>
-            <ArrowLeft size={17} />
+            <ArrowLeft size={16} />
             뒤로
           </button>
         )}
@@ -340,20 +316,9 @@ function App() {
           </p>
         )}
       </main>
-      {purchase && (
-        <Purchase
-          pack={pack}
-          cancel={() => setPurchase(false)}
-          confirm={async () => {
-            await pay(pack);
-            await seal();
-            setToast("팩 이용권을 열었어요");
-          }}
-        />
-      )}
       {toast && (
         <div className="toast" role="status">
-          <Check size={17} />
+          <Check size={16} />
           {toast}
         </div>
       )}

@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Check, RotateCcw } from "lucide-react";
 import { Answer, Pack, Question } from "./domain";
 import { buzz, reduced } from "./bridge";
-import { asset } from "./paths";
 
 const feedback = {
   yes: "tickMedium",
@@ -172,7 +171,9 @@ export function CardStack({
                 setDrag({ x: 0, y: 0 });
               }}
             >
-              <img draggable={false} src={asset("art/" + pack.id + ".webp")} alt="" />
+              <span className="card-mark">
+                {pack.id.replace("pack", "0")} · {pack.title}
+              </span>
               <h1>{q.question}</h1>
               {Math.max(Math.abs(drag.x), Math.abs(drag.y)) > 57 && (
                 <b className="drag-label">
@@ -199,9 +200,9 @@ export function CardStack({
               </button>
             ))}
           </div>
-          <small className="center">
-            오른쪽 · {q.options[0].label}　↑ {q.options[1].label}　왼쪽 ·{" "}
-            {q.options[2].label}
+          <small className="center hint">
+            끌어서 답해도 돼요 · 오른쪽 {q.options[0].label} / 위{" "}
+            {q.options[1].label} / 왼쪽 {q.options[2].label}
           </small>
         </>
       ) : (

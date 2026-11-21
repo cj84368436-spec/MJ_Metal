@@ -1,7 +1,11 @@
 import data from "./questions.json";
 
-// 화면 문구의 유일한 출처는 questions.json이다. 예전에는 질문 ID별 덮어쓰기 표가
-// copy.ts에 있어서 문항을 고쳐도 화면에는 옛 문장이 남았다. 그 표는 삭제했다.
+// 화면 문구의 유일한 출처는 questions.json이다.
+//
+// 결제 모델(3.0): 방을 만들고 보내는 것은 모든 팩에서 무료다. 두 사람이 답을
+// 마치면 결과 화면에서 겹친 카드 한 장을 무료로 열어 주고, 나머지 겹친 카드와
+// 카드별 한마디는 그 방에서 한 번 결제해 잠금 해제한다. 무료 팩은 처음부터 전부
+// 열린다. 상대의 답이나 서로 다른 카드는 어떤 경우에도 공개하지 않는다.
 
 export type Answer = "yes" | "maybe" | "no";
 export type Question = {
@@ -26,9 +30,14 @@ export const packs: Pack[] = (data.packs as Pack[]).map((pack) => ({
     options: q.options.map((o) => ({ ...o, label: o.label.trim() })),
   })),
 }));
-export const lockedText = "아직 열리지 않은 카드예요.";
+/** 잠금 해제 전에 무료로 열리는 겹친 카드 수. */
+export const previewCards = 1;
+export const lockedText = "둘 다 좋다고 한 카드예요.";
 export const price = (p: Pack) =>
   p.price_krw ? p.price_krw.toLocaleString("ko-KR") + "원" : "무료";
+/** 이 팩의 결과를 여는 값. 무료 팩은 0원. */
+export const unlockPrice = (p: Pack) => p.price_krw;
+export const isFree = (p: Pack) => p.price_krw === 0;
 
 export function validateFive(pack: Pack, ids: string[]) {
   return (
@@ -59,27 +68,35 @@ export function complete(answers: Answer[]) {
     Array.from(answers).every((a) => ["yes", "maybe", "no"].includes(a))
   );
 }
+export type Result = {
+  /** 둘 다 yes인 카드 수. */
+  matched: number;
+  /** 겹친 비율(%). */
+  percent: number;
+  /** 지금 열려 있는(질문·결과 문장을 볼 수 있는) 카드. */
+  opened: Question[];
+  /** 겹쳤지만 아직 잠긴 카드 수. 결제로 열린다. */
+  locked: number;
+  /** 서로 답이 달라 끝까지 비밀로 남는 카드 수. */
+  sealed: number;
+};
 export function matchCards(
   questions: Question[],
   host: Answer[],
   guest: Answer[],
-  report: boolean,
-) {
+  unlocked: boolean,
+): Result {
   if (questions.length !== 5 || !complete(host) || !complete(guest))
     throw new Error("카드 다섯 장에 모두 답해주세요.");
   const matched = questions.filter(
     (_, i) => host[i] === "yes" && guest[i] === "yes",
   );
-  const opened = matched.slice(0, report ? 5 : 2);
+  const opened = matched.slice(0, unlocked ? 5 : previewCards);
   return {
     matched: matched.length,
     percent: matched.length * 20,
     opened,
-    locked: 5 - opened.length,
+    locked: matched.length - opened.length,
+    sealed: 5 - matched.length,
   };
 }
-export type Result = ReturnType<typeof matchCards>;
-export const ownsPack = (ids: string[], pack: Pack) =>
-  pack.price_krw === 0 || ids.includes(pack.id);
-export const grantPack = (ids: string[], pack: Pack) =>
-  ownsPack(ids, pack) ? ids : [...ids, pack.id];

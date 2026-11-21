@@ -8,12 +8,13 @@ import {
   Send,
 } from "lucide-react";
 import { Answer, Pack } from "./domain";
-import { setNickname, submitGuest, shared } from "./store";
+import { setNickname, submitGuest, unlockRoom, shared } from "./store";
 import { buzz, shareText, inviteURL } from "./bridge";
 import { CardStack } from "./CardStack";
 import { useRoom } from "./useRoom";
-import { available, Fan } from "./Home";
+import { CardFan } from "./Home";
 import { Results } from "./Results";
+import { Purchase } from "./Setup";
 
 type Props = {
   id: string;
@@ -29,12 +30,13 @@ export function Room({ id, guest, step, go, start, toast }: Props) {
   const [edit, setEdit] = useState(false);
   const [fallback, setFallback] = useState(false);
   const [nick, setNick] = useState("");
+  const [purchase, setPurchase] = useState(false);
   const key = "guest-draft." + id + "." + guest;
   const [answers, setAnswers] = useState<Answer[]>(() =>
     JSON.parse(sessionStorage.getItem(key) ?? "[]"),
   );
   const [switchOpen, setSwitchOpen] = useState(false);
-  const { data, problem, refresh } = useRoom(id, guest, step === "report");
+  const { data, problem, refresh } = useRoom(id, guest);
   const [queued, setQueued] = useState(
     () => sessionStorage.getItem(key + ".send") === "1",
   );
@@ -112,10 +114,10 @@ export function Room({ id, guest, step, go, start, toast }: Props) {
       <section className="flow panel">
         <h1>카드를 열 수 없어요</h1>
         <p>{problem}</p>
-        <button className="secondary" onClick={refresh}>
+        <button className="ghost" onClick={refresh}>
           다시 확인하기
         </button>
-        <button className="primary" onClick={() => go("/")}>
+        <button className="cta" onClick={() => go("/")}>
           새 카드 만들기
         </button>
       </section>
@@ -131,7 +133,7 @@ export function Room({ id, guest, step, go, start, toast }: Props) {
   if (data.pack.id === "pack4" && import.meta.env.VITE_AUDIENCE === "teens")
     return (
       <section className="flow panel">
-        <h1>이 팩을 이용할 수 없어요.</h1>
+        <h1>이 팩을 이용할 수 없어요</h1>
         <button onClick={() => go("/")}>홈으로</button>
       </section>
     );
@@ -157,7 +159,7 @@ export function Room({ id, guest, step, go, start, toast }: Props) {
         <>
           <small>같은 브라우저에서 두 역할을 번갈아 체험해요.</small>
           <button
-            className="secondary"
+            className="ghost"
             onClick={() => go(guest ? base : invite)}
           >
             {guest ? "보낸 사람으로 보기" : "받는 사람으로 보기"}{" "}
@@ -168,21 +170,29 @@ export function Room({ id, guest, step, go, start, toast }: Props) {
     </aside>
   );
   if (data.result) {
-    const report = step === "report";
-    const nextPack =
-      available[(available.indexOf(pack) + 1) % available.length];
     return (
       <>
         <Results
           pack={pack}
-          result={report ? data.report! : data.result}
-          report={report}
+          result={data.result}
+          unlocked={data.unlocked}
           guest={!!guest}
-          recommend={{ pack: nextPack, start: () => start(nextPack) }}
-          goReport={() => go(next("report"))}
+          onUnlock={() => setPurchase(true)}
           again={() => start(pack)}
           home={() => go("/")}
         />
+        {purchase && (
+          <Purchase
+            pack={pack}
+            cancel={() => setPurchase(false)}
+            confirm={async () => {
+              await unlockRoom(id, guest);
+              refresh();
+              setPurchase(false);
+              toast("설레는 답을 열었어요");
+            }}
+          />
+        )}
         {switcher}
       </>
     );
@@ -209,37 +219,39 @@ export function Room({ id, guest, step, go, start, toast }: Props) {
             }}
           />
         ) : (
-          <section className="flow received panel center">
-            <Fan />
+          <section className="flow received">
+            <CardFan questions={data.questions} small />
+            <span className="eyebrow">받은 카드 · {pack.title}</span>
             <h1>
               {data.nick ? data.nick + "님이" : "누군가"} 카드 5장을 보냈어요
             </h1>
-            <p>30초면 끝나요.</p>
-            <div className="notice">
-              공개되지 않은 카드는 상대의 답을 알려주지 않아요. 둘 다 좋다고 한
-              카드만 열려요.
+            <p>다섯 장에 답하면, 둘 다 좋다고 한 카드만 열려요.</p>
+            <div className="notice small">
+              네가 뭘 골랐는지, 상대는 알 수 없어요. 서로 다른 카드는
+              아무것도 알려주지 않아요.
             </div>
-            <small>이 링크를 가진 사람만 참여할 수 있어요.</small>
-            <button className="primary" onClick={() => go(next("answer"))}>
-              나도 답할래 <ArrowRight size={18} />
+            <button className="cta" onClick={() => go(next("answer"))}>
+              나도 답할래
+              <ArrowRight size={18} />
             </button>
+            <small className="center-note">이 링크를 가진 사람만 참여할 수 있어요.</small>
           </section>
         )
       ) : (
         <section className="flow share-screen">
-          <div className="center">
+          <div className="share-head">
             <span className="complete">
-              <Check />
+              <Check size={20} />
             </span>
             <h1>카드 5장이 준비됐어요</h1>
-            <p>아직 아무도 열지 않았어요. 링크를 보내면 시작돼요.</p>
+            <p>링크를 보내면 시작돼요. 보내기 전까지는 아무도 못 봐요.</p>
           </div>
-          <div className="panel invite-card">
+          <div className="invite-card">
             <span className="eyebrow">
-              <LinkIcon size={16} />
-              {pack.title} · 카드 5장
+              <LinkIcon size={15} />
+              {pack.title} · 5장
             </span>
-            <div className="section-title">
+            <div className="invite-row">
               <strong>{id}</strong>
               <button
                 className="text-btn"
@@ -297,7 +309,7 @@ export function Room({ id, guest, step, go, start, toast }: Props) {
             )}
           </div>
           <button
-            className="primary"
+            className="cta"
             disabled={!href}
             onClick={async () => {
               try {
@@ -313,12 +325,15 @@ export function Room({ id, guest, step, go, start, toast }: Props) {
               }
             }}
           >
-            <Send size={18} />
+            <Send size={17} />
             카톡으로 보내기
           </button>
-          <button className="text-btn center" onClick={() => go("/library")}>
+          <button className="text-btn" onClick={() => go("/library")}>
             나중에 보내기
           </button>
+          <small className="center-note">
+            보내기는 무료예요. 결과는 첫 카드까지 무료로 열려요.
+          </small>
         </section>
       )}
       {error && (

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { RoomData, viewRoom } from "./store";
 
-export function useRoom(id: string, guest: string | null, report: boolean) {
-  const key = id + ":" + guest + ":" + report;
+export function useRoom(id: string, guest: string | null) {
+  const key = id + ":" + guest;
   const [state, setState] = useState<{
     key: string;
     data?: RoomData;
@@ -19,7 +19,7 @@ export function useRoom(id: string, guest: string | null, report: boolean) {
       if (document.hidden) return;
       const current = ++sequence;
       try {
-        const data = await viewRoom(id, guest, report);
+        const data = await viewRoom(id, guest);
         if (!alive || current !== sequence) return;
         setState({ key, data });
         if (!guest && !data.result && !document.hidden)
@@ -43,6 +43,6 @@ export function useRoom(id: string, guest: string | null, report: boolean) {
       removeEventListener("online", read);
       document.removeEventListener("visibilitychange", read);
     };
-  }, [id, guest, report, version, key]);
+  }, [id, guest, version, key]);
   return { ...(state.key === key ? state : { key }), refresh };
 }

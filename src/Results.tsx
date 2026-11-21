@@ -1,6 +1,6 @@
-import { CSSProperties, useEffect, useState } from "react";
-import { ArrowRight, Download, Heart, LockKeyhole } from "lucide-react";
-import { lockedText, Pack, Result } from "./domain";
+import { useEffect, useState } from "react";
+import { ArrowRight, Download, LockKeyhole } from "lucide-react";
+import { Pack, price, Result } from "./domain";
 import { buzz, reduced } from "./bridge";
 
 function usePercent(target: number) {
@@ -10,7 +10,7 @@ function usePercent(target: number) {
       setN(target);
       return;
     }
-    const start = performance.now() + 400;
+    const start = performance.now() + 300;
     let id = 0;
     const frame = (time: number) => {
       if (time >= start) {
@@ -31,35 +31,39 @@ async function exportImage(result: Result) {
   canvas.height = 1350;
   const c = canvas.getContext("2d");
   if (!c) throw new Error();
-  c.fillStyle = "#F2F4F6";
+  c.fillStyle = "#F7F3EC";
   c.fillRect(0, 0, 1080, 1350);
-  c.fillStyle = "#FFFFFF";
+  c.fillStyle = "#FFFCF6";
   c.beginPath();
-  c.roundRect(40, 40, 1000, 1270, 40);
+  c.roundRect(44, 44, 992, 1262, 36);
   c.fill();
-  c.fillStyle = "#191F28";
-  c.font = "600 42px sans-serif";
-  c.fillText("비밀 다섯 장", 90, 145);
-  c.fillStyle = "#3182F6";
-  c.font = "bold 114px sans-serif";
-  c.fillText(result.percent + "%", 85, 308);
-  c.fillStyle = "#191F28";
-  c.font = "500 38px sans-serif";
-  c.fillText("5장 중 " + result.matched + "장이 함께 열렸어요", 90, 398);
-  c.font = "500 34px sans-serif";
-  let y = 520;
+  c.strokeStyle = "#E6DED2";
+  c.lineWidth = 2;
+  c.stroke();
+  c.fillStyle = "#1B1917";
+  c.font = "600 40px sans-serif";
+  c.fillText("비밀 다섯 장", 100, 150);
+  c.fillStyle = "#B4493A";
+  c.font = "600 108px sans-serif";
+  c.fillText(result.matched + " / 5", 96, 320);
+  c.fillStyle = "#1B1917";
+  c.font = "500 42px sans-serif";
+  c.fillText("5장 중 " + result.matched + "장이 통했어요", 98, 404);
+  c.fillStyle = "#7A7268";
+  c.font = "400 30px sans-serif";
+  let y = 530;
   for (const q of result.opened) {
     let row = "";
     for (const char of q.question) {
-      if (c.measureText(row + char).width > 895) {
-        c.fillText(row, 90, y);
+      if (c.measureText(row + char).width > 860) {
+        c.fillText(row, 100, y);
         row = "";
-        y += 52;
+        y += 46;
       }
       row += char;
     }
-    c.fillText(row, 90, y);
-    y += 94;
+    c.fillText(row, 100, y);
+    y += 84;
   }
   const blob = await new Promise<Blob | null>((res) =>
     canvas.toBlob(res, "image/png"),
@@ -80,127 +84,113 @@ async function exportImage(result: Result) {
 type Props = {
   pack: Pack;
   result: Result;
-  report: boolean;
-  recommend?: { pack: Pack; start: () => void };
+  unlocked: boolean;
   demo?: boolean;
-  goReport?: () => void;
+  guest?: boolean;
+  onUnlock?: () => void;
   again: () => void;
   home: () => void;
-  guest?: boolean;
 };
 export function Results({
   pack,
   result,
-  report,
+  unlocked,
   demo,
-  goReport,
+  guest,
+  onUnlock,
   again,
   home,
-  guest,
-  recommend,
 }: Props) {
   const n = usePercent(result.percent);
   const [error, setError] = useState("");
-  const [mini, setMini] = useState(false);
   useEffect(() => {
-    const timer = setTimeout(() => buzz("success"), reduced() ? 0 : 2160);
-    const scroll = () => setMini(scrollY > 200);
-    addEventListener("scroll", scroll);
-    return () => {
-      clearTimeout(timer);
-      removeEventListener("scroll", scroll);
-    };
+    buzz("success");
   }, []);
+  const spend = price(pack);
   return (
     <section className="flow result">
-      <span className="eyebrow">
-        {demo ? "예시 결과" : report ? "심화 리포트" : "카드 개봉"} ·{" "}
-        {pack.title}
-      </span>
-      {mini && (
-        <div className="mini">
-          {result.percent}%　·　{result.matched}/5장
-        </div>
-      )}
-      <div className="result-summary">
-        <small>겹친 비율</small>
-        <strong>
-          {n === null ? (
-            <i>계산 중…</i>
-          ) : (
-            <>
-              {n}
-              <em>%</em>
-            </>
-          )}
-        </strong>
-        <h1>5장 중 {result.matched}장이 함께 열렸어요</h1>
-        <p>
-          {result.matched === 0
-            ? "겹친 카드가 없어요. 열리지 않은 카드는 아무것도 알려주지 않아요."
-            : result.matched === 1
-              ? "한 장이 열렸어요. 나머지는 아직 비밀예요."
-              : report
-                ? "함께 고른 카드로 얘기를 이어가 보세요."
-                : "둘 다 좋다고 한 카드를 펼쳐봐요."}
-        </p>
-      </div>
+      <header className="result-head">
+        <span className="eyebrow">
+          {pack.title}
+          {demo && " · 예시"}
+        </span>
+        {result.matched ? (
+          <>
+            <h1>
+              5장 중 <em>{result.matched}장</em>이 통했어요
+            </h1>
+            <p className="result-sub">
+              겹친 비율 {n === null ? "…" : n + "%"}
+              {unlocked ? " · 카드마다 한마디까지 열렸어요" : ""}
+            </p>
+          </>
+        ) : (
+          <>
+            <h1>이번엔 겹친 카드가 없어요</h1>
+            <p className="result-sub">
+              서로 뭘 골랐는지는 알 수 없어요. 그것도 비밀이에요.
+            </p>
+          </>
+        )}
+      </header>
+
       {result.opened.map((q, i) => (
-        <div className="flip-frame" key={q.id}>
-          <article
-            className="flip"
-            style={{ "--delay": 1000 + i * 140 + "ms" } as CSSProperties}
-          >
-            <div className="flip-front panel" aria-hidden="true">
-              <Heart size={26} />
-              {q.question}
-            </div>
-            <div className="open-card panel">
-              <span className="open-label">
-                <Heart size={16} fill="currentColor" /> 함께 열린 카드
-              </span>
-              <h2>{q.question}</h2>
-              <p>{q.matchMessage}</p>
-              {report && (
-                <div className="follow">
-                  <strong>다음 대화 문장</strong>
-                  <p>{q.followUp}</p>
-                </div>
-              )}
-            </div>
-          </article>
-        </div>
-      ))}
-      {(report
-        ? result.locked > 0
-          ? [0]
-          : []
-        : Array.from({ length: result.locked }, (_, i) => i)
-      ).map((i) => (
-        <div
-          className="locked"
-          style={{ "--delay": 1500 + i * 80 + "ms" } as CSSProperties}
-          key={i}
+        <article
+          className="open-card"
+          key={q.id}
+          style={{ animationDelay: 140 + i * 90 + "ms" }}
         >
-          <LockKeyhole size={19} />
-          {lockedText}
-          {report && <small>{result.locked}장</small>}
-        </div>
+          <span className="tag">함께 열린 카드</span>
+          <h2>{q.question}</h2>
+          <p className="match">{q.matchMessage}</p>
+          {unlocked && (
+            <div className="follow">
+              <span>이어질 한마디</span>
+              <p>{q.followUp}</p>
+            </div>
+          )}
+        </article>
       ))}
-      <div className="actions reveal-actions">
+
+      {result.locked > 0 && (
+        <section className="paywall">
+          <div className="backs" aria-hidden="true">
+            {Array.from({ length: Math.min(result.locked, 3) }, (_, i) => (
+              <i key={i}>
+                <LockKeyhole size={17} />
+              </i>
+            ))}
+          </div>
+          <h3>나머지 {result.locked}장도 통했어요</h3>
+          <p>
+            둘 다 좋다고 한 카드예요. 카드마다 이어질 한마디까지 한 번에
+            열려요.
+          </p>
+          {demo ? (
+            <small>예시라서 결제 없이 보여드려요.</small>
+          ) : (
+            <button className="cta" onClick={onUnlock}>
+              나머지 설레는 답 모두 열기 · {spend}
+            </button>
+          )}
+        </section>
+      )}
+
+      {result.sealed > 0 && (
+        <p className="sealed">
+          나머지 {result.sealed}장은 서로 답이 달라서, 끝까지 비밀이에요.
+        </p>
+      )}
+
+      <div className="actions">
         {demo ? (
-          <button className="primary" onClick={again}>
+          <button className="cta" onClick={again}>
             이제 진짜로 보내기
             <ArrowRight size={18} />
           </button>
         ) : (
           <>
-            {!report && result.matched > 0 && (
-              <button className="primary" onClick={goReport}>
-                심화 리포트 열기 <ArrowRight size={18} />
-              </button>
-            )}
-            <button className="secondary" onClick={again}>
+            <button className="ghost" onClick={again}>
               {guest ? "나도 카드 만들기" : "같은 팩으로 새 5장"}
             </button>
             {pack.id !== "pack4" && (
@@ -215,20 +205,9 @@ export function Results({
                   }
                 }}
               >
-                <Download size={17} />
-                결과 이미지 저장·공유
+                <Download size={16} />
+                결과 이미지 저장
               </button>
-            )}
-            {report && (
-              <>
-                <small>이 리포트에는 두 사람이 함께 고른 카드만 담겨요.</small>
-                {recommend && (
-                  <button className="secondary" onClick={recommend.start}>
-                    다음 팩 · {recommend.pack.title}
-                    <ArrowRight size={16} />
-                  </button>
-                )}
-              </>
             )}
             <button className="text-btn" onClick={home}>
               다른 팩 보기

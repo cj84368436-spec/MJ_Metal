@@ -1,9 +1,8 @@
 import {
   Answer,
   complete,
-  grantPack,
+  isFree,
   matchCards,
-  ownsPack,
   Pack,
   packs,
   validateFive,
@@ -17,13 +16,6 @@ function read<T>(key: string, fallback: T): T {
 function write(key: string, value: unknown) {
   localStorage.setItem(prefix + key, JSON.stringify(value));
 }
-export function owned() {
-  return packs.filter((p) => read("pass." + p.id, false)).map((p) => p.id);
-}
-export function pay(pack: Pack) {
-  if (grantPack(owned(), pack).includes(pack.id))
-    write("pass." + pack.id, true);
-}
 export function recent(pack: Pack) {
   return read<string[][]>("recent." + pack.id, []);
 }
@@ -36,6 +28,8 @@ type Room = {
   created: number;
   hostAnswers: Answer[];
   guestAnswers?: Answer[];
+  /** 결과 잠금 해제(이 방에서 한 번 결제). 무료 팩은 만들 때부터 true. */
+  unlocked?: boolean;
   nick: string;
 };
 export function token() {
@@ -46,12 +40,9 @@ export function token() {
     .replaceAll("=", "");
 }
 export function createRoom(pack: Pack, ids: string[], answers: Answer[]) {
-  if (
-    !validateFive(pack, ids) ||
-    !complete(answers) ||
-    !ownsPack(owned(), pack)
-  )
-    throw new Error("카드와 팩 이용권을 확인해주세요.");
+  // 보내기는 모든 팩에서 무료다. 팩 이용권 확인은 여기서 하지 않는다.
+  if (!validateFive(pack, ids) || !complete(answers))
+    throw new Error("카드 다섯 장과 답을 확인해주세요.");
   let id: string;
   do {
     id = Array.from(crypto.getRandomValues(new Uint8Array(8)), (n) =>
@@ -66,6 +57,7 @@ export function createRoom(pack: Pack, ids: string[], answers: Answer[]) {
     guest: token(),
     created: Date.now(),
     hostAnswers: answers,
+    unlocked: isFree(pack),
     nick: "",
   };
   write("room." + id, room);
@@ -93,19 +85,18 @@ export function viewRoom(id: string, guest: string | null) {
   const room = access(id, guest);
   const pack = packs.find((p) => p.id === room.packId)!;
   const qs = room.ids.map((id) => pack.questions.find((q) => q.id === id)!);
+  const unlocked = !!room.unlocked || isFree(pack);
   const result = room.guestAnswers
-    ? matchCards(qs, room.hostAnswers, room.guestAnswers, false)
+    ? matchCards(qs, room.hostAnswers, room.guestAnswers, unlocked)
     : null;
   return {
     pack,
     nick: room.nick,
     created: room.created,
     guestToken: room.guest,
+    unlocked,
     questions: result ? [] : qs,
     result,
-    report: room.guestAnswers
-      ? matchCards(qs, room.hostAnswers, room.guestAnswers, true)
-      : null,
   };
 }
 async function editRoom(id: string, update: () => void) {
@@ -122,6 +113,14 @@ export async function submitGuest(
     if (room.guestAnswers) return;
     if (!complete(answers)) throw new Error("카드 다섯 장에 모두 답해주세요.");
     write("room." + id, { ...room, guestAnswers: answers });
+  });
+}
+/** 모의 결제: 이 방의 결과 잠금을 해제한다. 두 좌석 모두 전체 결과를 본다. */
+export async function unlock(id: string, guest: string | null) {
+  await editRoom(id, () => {
+    const room = access(id, guest);
+    if (room.unlocked) return;
+    write("room." + id, { ...room, unlocked: true });
   });
 }
 export async function setNickname(id: string, text: string) {
