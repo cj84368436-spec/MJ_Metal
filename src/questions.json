@@ -636,11 +636,11 @@
       "questions": [
         {
           "id": "p3-01",
-          "question": "오래 만나도, 내 옷차림에 한 번 더 봐?",
+          "question": "요즘도 내 옷차림에 눈 한 번 더 가?",
           "options": [
             {
               "value": "yes",
-              "label": "한 번 더 봐"
+              "label": "한 번 더 가"
             },
             {
               "value": "maybe",
@@ -648,7 +648,7 @@
             },
             {
               "value": "no",
-              "label": "잘 안 봐"
+              "label": "잘 안 가"
             }
           ],
           "matchMessage": "오늘도 서로 한 번 더 봤대.",
@@ -716,15 +716,15 @@
         },
         {
           "id": "p3-05",
-          "question": "우리 닮아가는 습관, 하나 꼽으면 뭐야?",
+          "question": "우리 닮아가는 습관, 하나 떠올라?",
           "options": [
             {
               "value": "yes",
-              "label": "말투"
+              "label": "떠올라"
             },
             {
               "value": "maybe",
-              "label": "취향"
+              "label": "가끔"
             },
             {
               "value": "no",
