@@ -17,12 +17,12 @@ import { reduced } from "./bridge";
 import { asset } from "./paths";
 
 const situations = [
-  ["썸 탈 때", 0, 7],
-  ["결정 앞에서", 1, 4],
-  ["서운함 풀 때", 2, 1],
-  ["싸운 다음 날", 2, 8],
-  ["밤에 둘만 있을 때", 3, 0],
-  ["여행 가기 전에", 2, 5],
+  ["썸 탈 때", 0, 0],
+  ["고백 직전", 1, 12],
+  ["손잡고 싶을 때", 1, 1],
+  ["말 못 한 서운함", 2, 0],
+  ["싸운 다음 날", 2, 6],
+  ["둘만의 밤", 3, 0],
 ] as const;
 export const available = packs.filter(
   (p) => p.id !== "pack4" || import.meta.env.VITE_AUDIENCE !== "teens",
@@ -40,11 +40,14 @@ export function Fan() {
   );
 }
 const guide = [
-  ["카드 5장 고르고 링크 보내기", "썸·커플 팩에서 5장을 골라 링크로 보내요."],
-  ["상대도 몰래 누르기", "30초, 로그인 없이. 나는 상대 답을 볼 수 없어요."],
+  ["카드 5장 골라 링크 보내기", "지금 진짜 궁금한 것만 5장 골라요."],
+  [
+    "상대도 몰래 답하기",
+    "30초, 로그인 없이. 서로 뭐라고 골랐는지는 안 보여요.",
+  ],
   [
     "둘 다 좋아한 카드만 열려요",
-    "나머지는 비밀로 남아요. 누가 어떤 답을 골랐는지 표시하지 않아요.",
+    "겹친 카드만 펼쳐져요. 나머지는 비밀로 남아요.",
   ],
 ];
 function Preview({ question, go }: { question: string; go: () => void }) {
@@ -188,7 +191,7 @@ export function Home({
             </span>
           </div>
           <h1>
-            직접 묻기 어색한 말,
+            대놓고 묻기 쪽팔린 말,
             <br />둘 다 좋다고 할 때만 열려요.
           </h1>
           <p>카드 5장을 골라 보내면, 상대도 몰래 답해요.</p>
@@ -199,7 +202,9 @@ export function Home({
           <button className="primary" onClick={start}>
             {ownsPack(paid, selected)
               ? "카드 5장 만들기"
-              : selected.title + " · " + price(selected) + "으로 시작"}
+              : selected.title +
+                " · " +
+                (selected.price_krw ? price(selected) + "으로 시작" : "무료로 시작")}
             <ArrowRight size={19} />
           </button>
           <small>한 판 30초 · 무료 팩 1개부터</small>

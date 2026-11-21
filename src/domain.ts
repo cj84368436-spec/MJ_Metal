@@ -1,6 +1,7 @@
 import data from "./questions.json";
 
-import { optionLabel, messages, prompts } from "./copy";
+// 화면 문구의 유일한 출처는 questions.json이다. 예전에는 질문 ID별 덮어쓰기 표가
+// copy.ts에 있어서 문항을 고쳐도 화면에는 옛 문장이 남았다. 그 표는 삭제했다.
 
 export type Answer = "yes" | "maybe" | "no";
 export type Question = {
@@ -22,9 +23,7 @@ export const packs: Pack[] = (data.packs as Pack[]).map((pack) => ({
   ...pack,
   questions: pack.questions.map((q) => ({
     ...q,
-    options: q.options.map((o) => ({ ...o, label: optionLabel(o.label) })),
-    matchMessage: messages[q.id] ?? q.matchMessage,
-    followUp: prompts[q.id] ?? q.followUp,
+    options: q.options.map((o) => ({ ...o, label: o.label.trim() })),
   })),
 }));
 export const lockedText = "아직 열리지 않은 카드예요.";

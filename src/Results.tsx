@@ -123,7 +123,7 @@ export function Results({
         </div>
       )}
       <div className="result-summary">
-        <small>우리 온도</small>
+        <small>겹친 비율</small>
         <strong>
           {n === null ? (
             <i>계산 중…</i>
@@ -137,11 +137,11 @@ export function Results({
         <h1>5장 중 {result.matched}장이 함께 열렸어요</h1>
         <p>
           {result.matched === 0
-            ? "이번엔 겹친 카드가 없어요. 열리지 않은 카드는 아무것도 알려주지 않아요."
+            ? "겹친 카드가 없어요. 열리지 않은 카드는 아무것도 알려주지 않아요."
             : result.matched === 1
               ? "한 장이 열렸어요. 나머지는 아직 비밀예요."
               : report
-                ? "함께 고른 카드로 대화를 이어가 보세요."
+                ? "함께 고른 카드로 얘기를 이어가 보세요."
                 : "둘 다 좋다고 한 카드를 펼쳐봐요."}
         </p>
       </div>

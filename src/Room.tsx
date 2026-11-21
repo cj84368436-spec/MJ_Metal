@@ -303,7 +303,7 @@ export function Room({ id, guest, step, go, start, toast }: Props) {
               try {
                 if (
                   await shareText(
-                    "우리, 어디까지 같을까? 5장으로 확인.\n" + href,
+                    "대놓고 못 물어본 것 5개. 둘 다 좋으면 열려.\n" + href,
                   )
                 )
                   toast("공유 시트를 열었어요");

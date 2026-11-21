@@ -28,7 +28,9 @@ export function Setup({
           ? ids.length + " / 5장 선택"
           : "15문항 중 오늘 묻고 싶은 5장을 골라요."}
       </p>
-      {pack.id === "pack4" && <small>은유로만 묻는 성인 커플 카드예요.</small>}
+      {pack.id === "pack4" && (
+        <small>19+ 성인 카드예요. 스킨십·외박처럼 말로 꺼내기 어려운 것만 담았어요.</small>
+      )}
       {!manual ? (
         <div className="actions">
           <button
