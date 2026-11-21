@@ -231,12 +231,16 @@ main {
   color: var(--weak);
 }
 .fan-card.c1 {
-  transform: translateX(-80%) translateY(24px) rotate(-9deg) scale(0.94);
-  opacity: 0.6;
+  transform: translateX(-66%) translateY(24px) rotate(-9deg) scale(0.94);
+  opacity: 0.72;
 }
 .fan-card.c2 {
-  transform: translateX(-20%) translateY(16px) rotate(7deg) scale(0.96);
-  opacity: 0.82;
+  transform: translateX(-34%) translateY(16px) rotate(7deg) scale(0.96);
+  opacity: 0.88;
+}
+.fan-card.c1 p,
+.fan-card.c2 p {
+  opacity: 0;
 }
 .fan-card.c3 {
   z-index: 3;
@@ -1202,10 +1206,10 @@ dialog h1 {
     width: 200px;
   }
   .fan-card.c1 {
-    transform: translateX(-72%) translateY(22px) rotate(-8deg) scale(0.94);
+    transform: translateX(-64%) translateY(22px) rotate(-8deg) scale(0.94);
   }
   .fan-card.c2 {
-    transform: translateX(-28%) translateY(14px) rotate(6deg) scale(0.96);
+    transform: translateX(-36%) translateY(14px) rotate(6deg) scale(0.96);
   }
   .pack-list {
     grid-template-columns: repeat(4, 1fr);
