@@ -8,9 +8,14 @@
 
 ## 지금 배포되는 방식
 
-`gh-pages` 브랜치에 `/MJ_Metal/` 서브패스를 기준으로 빌드한 결과물이 들어 있고,
-GitHub Pages 소스를 **Deploy from a branch → gh-pages / (root)** 로 고르면
-https://cj84368436-spec.github.io/MJ_Metal/ 이 열립니다.
+GitHub Pages가 켜져 있고 소스는 **Deploy from a branch → gh-pages / (root)** 입니다.
+`gh-pages` 브랜치에는 `npm run build:pages` 결과물(`/MJ_Metal/` 기준, `404.html` 폴백 포함)이
+들어 있어서, 이 브랜치에 푸시하면 Pages가 자동으로 다시 빌드합니다.
+
+- 주소: https://cj84368436-spec.github.io/MJ_Metal/ (HTTPS 강제)
+- 코드 갱신 후 재배포: `bash /workspace/mjmetal-preview-deploy.sh`
+  (코드를 받아 빌드하고 gh-pages에 푸시한 뒤 HTTP 200과 자산 응답까지 확인합니다)
+- 웹 미리보기는 Supabase 환경변수가 없어 `mockStore`(브라우저 localStorage)로 동작합니다.
 
 ## 나중에 자동 배포로 바꾸려면
 
