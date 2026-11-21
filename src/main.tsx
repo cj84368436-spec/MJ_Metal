@@ -1,0 +1,362 @@
+import { useCallback, useEffect, useState } from "react";
+import { createRoot } from "react-dom/client";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  Inbox,
+  Layers2,
+  LockKeyhole,
+} from "lucide-react";
+import {
+  Answer,
+  matchCards,
+  Pack,
+  packs,
+  ownsPack,
+  selectFive,
+  validateFive,
+} from "./domain";
+import { createRoom, myRooms, owned, pay, syncPasses } from "./store";
+import { buzz, initialPath, installBridge, leave, native } from "./bridge";
+import { available, Home } from "./Home";
+import { Setup, Purchase } from "./Setup";
+import { CardStack } from "./CardStack";
+import { Room } from "./Room";
+import { Results } from "./Results";
+import "./style.css";
+
+type Draft = {
+  packId: string;
+  ids: string[];
+  answers: Answer[];
+  room?: string;
+};
+const route = () => location.pathname + location.search;
+const initial = initialPath();
+if (initial) history.replaceState(null, "", initial);
+
+function Demo({ pack, start }: { pack: Pack; start: () => void }) {
+  const [ids] = useState(() => selectFive(pack, []));
+  const [show, setShow] = useState(false);
+  const qs = ids.map((id) => pack.questions.find((q) => q.id === id)!);
+  if (show)
+    return (
+      <Results
+        pack={pack}
+        result={matchCards(
+          qs,
+          ["yes", "maybe", "yes", "yes", "no"],
+          ["yes", "yes", "yes", "yes", "maybe"],
+          false,
+        )}
+        demo
+        report={false}
+        again={start}
+        home={start}
+      />
+    );
+  return (
+    <section className="flow center">
+      <span className="eyebrow">예시 · {pack.title}</span>
+      <div className="flow-art">
+        <img src={"/art/" + pack.id + ".webp"} alt="" />
+      </div>
+      <h1>둘 다 좋아하면 어떻게 열릴까요?</h1>
+      <p>다섯 장 중 세 장을 함께 고른 예시예요.</p>
+      <div className="panel demo-list">
+        {qs.map((q) => (
+          <p key={q.id}>{q.question}</p>
+        ))}
+      </div>
+      <button className="primary" onClick={() => setShow(true)}>
+        예시 결과 보기 <ArrowRight size={18} />
+      </button>
+    </section>
+  );
+}
+function Library({ go }: { go: (u: string) => void }) {
+  const rooms = myRooms();
+  return (
+    <section className="flow">
+      <h1>내 카드함</h1>
+      <p>최근 7일 동안 내가 보낸 카드예요.</p>
+      {rooms.length ? (
+        rooms.map((r) => (
+          <button
+            className="library-row panel"
+            key={r.id}
+            onClick={() => go("/r/" + r.id)}
+          >
+            <img src={"/art/" + r.pack.id + ".webp"} alt="" />
+            <span>
+              <b>{r.pack.title}</b>
+              <small>
+                {r.id} · {new Date(r.created).toLocaleDateString("ko-KR")}
+              </small>
+            </span>
+            <em>{r.done ? "결과 보기" : "응답 대기"}</em>
+            <ArrowRight size={16} />
+          </button>
+        ))
+      ) : (
+        <div className="panel center empty">
+          <Inbox />
+          <h2>아직 보낸 카드가 없어요</h2>
+          <button className="primary" onClick={() => go("/")}>
+            카드 5장 만들기
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
+function App() {
+  const [path, setPath] = useState(route);
+  const [selected, setSelected] = useState(available[0]);
+  const [, setRev] = useState(0);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    void syncPasses()
+      .then(() => setRev((v) => v + 1))
+      .catch(() => {});
+  }, []);
+  const [purchase, setPurchase] = useState(false);
+  const [error, setError] = useState("");
+  const [toast, setToast] = useState("");
+  const url = new URL(path, location.origin);
+  const go = useCallback((destination: string, replace = false) => {
+    history[replace ? "replaceState" : "pushState"](
+      { inside: true },
+      "",
+      destination,
+    );
+    setPath(route());
+    setPurchase(false);
+    setError("");
+    window.scrollTo(0, 0);
+  }, []);
+  const back = useCallback(() => {
+    if (document.querySelector("dialog[open]")) {
+      document
+        .querySelector("dialog")
+        ?.dispatchEvent(new Event("cancel", { cancelable: true }));
+      return;
+    }
+    if (location.pathname === "/" && !location.search) {
+      leave();
+      return;
+    }
+    if (history.state?.inside) history.back();
+    else go("/", true);
+  }, [go]);
+  useEffect(() => {
+    const pop = () => {
+      setPath(route());
+      setPurchase(false);
+      setError("");
+    };
+    addEventListener("popstate", pop);
+    const release = installBridge(back);
+    return () => {
+      removeEventListener("popstate", pop);
+      release();
+    };
+  }, [back]);
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(""), 2400);
+    return () => clearTimeout(timer);
+  }, [toast]);
+  const pack =
+    available.find((p) => p.id === url.searchParams.get("pack")) ??
+    available[0];
+  const step = url.searchParams.get("step");
+  const draftKey = "draft." + url.searchParams.get("d");
+  const draft: Draft | null = JSON.parse(
+    sessionStorage.getItem(draftKey) ?? "null",
+  );
+  const start = (p: Pack) => {
+    setSelected(p);
+    go("/?step=setup&pack=" + p.id);
+  };
+  function begin(ids: string[]) {
+    const key = crypto.getRandomValues(new Uint32Array(2)).join("-");
+    sessionStorage.setItem(
+      "draft." + key,
+      JSON.stringify({ packId: pack.id, ids, answers: [] }),
+    );
+    go("/?step=answer&pack=" + pack.id + "&d=" + key);
+  }
+  function update(d: Draft) {
+    sessionStorage.setItem(draftKey, JSON.stringify(d));
+    setRev((v) => v + 1);
+  }
+  async function seal() {
+    if (!draft) return;
+    if (draft.room) {
+      go("/r/" + draft.room, true);
+      return;
+    }
+    if (!ownsPack(owned(), pack)) {
+      setPurchase(true);
+      return;
+    }
+    const id = await createRoom(pack, draft.ids, draft.answers, draftKey);
+    update({ ...draft, room: id });
+    go("/r/" + id, true);
+  }
+  const home = url.pathname === "/" && !step && !url.searchParams.has("room");
+  const isLibrary = url.pathname === "/library";
+  const roomId =
+    /^\/r\/([a-z0-9]{8})$/.exec(url.pathname)?.[1] ??
+    (url.pathname === "/" ? url.searchParams.get("room") : null);
+  let page;
+  if (roomId)
+    page = (
+      <Room
+        key={roomId + (url.searchParams.get("j") ?? "host")}
+        id={roomId}
+        guest={url.searchParams.get("j")}
+        step={step}
+        go={go}
+        start={start}
+        toast={setToast}
+      />
+    );
+  else if (isLibrary) page = <Library go={go} />;
+  else if (url.pathname === "/demo")
+    page = <Demo pack={pack} start={() => start(pack)} />;
+  else if (home)
+    page = (
+      <Home
+        selected={selected}
+        onSelect={setSelected}
+        start={() => start(selected)}
+        go={go}
+      />
+    );
+  else if (url.pathname === "/" && step === "setup")
+    page = <Setup key={pack.id} pack={pack} start={begin} />;
+  else if (
+    url.pathname === "/" &&
+    step === "answer" &&
+    draft?.packId === pack.id &&
+    validateFive(pack, draft.ids)
+  ) {
+    if (draft.room)
+      page = (
+        <section className="flow panel">
+          <h1>이미 봉인한 카드예요</h1>
+          <button
+            className="primary"
+            onClick={() => go("/r/" + draft.room, true)}
+          >
+            내 방으로
+          </button>
+        </section>
+      );
+    else
+      page = (
+        <CardStack
+          pack={pack}
+          questions={draft.ids.map(
+            (id) => pack.questions.find((q) => q.id === id)!,
+          )}
+          answers={draft.answers}
+          change={(a) => update({ ...draft, answers: a })}
+          busy={busy}
+          finish={async () => {
+            if (busy) return;
+            setBusy(true);
+            try {
+              await seal();
+            } catch (e) {
+              setError((e as Error).message);
+              buzz("error");
+            } finally {
+              setBusy(false);
+            }
+          }}
+        />
+      );
+  } else
+    page = (
+      <section className="flow panel">
+        <h1>링크를 확인해주세요</h1>
+        <button className="primary" onClick={() => go("/")}>
+          홈으로
+        </button>
+      </section>
+    );
+  return (
+    <div
+      onClickCapture={(e) => {
+        const button = (e.target as HTMLElement).closest("button");
+        if (button && !button.disabled && !button.dataset.feedback) buzz();
+      }}
+    >
+      <header>
+        <div className="topbar">
+          <button
+            className="brand"
+            aria-label="비밀 다섯 장 홈"
+            onClick={() => go("/")}
+          >
+            <span className="brand-symbol">
+              <LockKeyhole size={17} />
+            </span>
+            비밀 다섯 장
+          </button>
+          <nav aria-label="주 메뉴">
+            <button
+              className={!isLibrary ? "current" : ""}
+              onClick={() => go("/")}
+            >
+              <Layers2 size={16} />
+              카드 홈
+            </button>
+            <button
+              className={isLibrary ? "current" : ""}
+              onClick={() => go("/library")}
+            >
+              <Inbox size={16} />내 카드함
+            </button>
+          </nav>
+        </div>
+      </header>
+      <main>
+        {!home && !native && (
+          <button className="back text-btn" onClick={back}>
+            <ArrowLeft size={17} />
+            뒤로
+          </button>
+        )}
+        {page}
+        {error && (
+          <p className="error" role="alert">
+            {error}
+          </p>
+        )}
+      </main>
+      {purchase && (
+        <Purchase
+          pack={pack}
+          cancel={() => setPurchase(false)}
+          confirm={async () => {
+            await pay(pack);
+            await seal();
+            setToast("팩 이용권을 열었어요");
+          }}
+        />
+      )}
+      {toast && (
+        <div className="toast" role="status">
+          <Check size={17} />
+          {toast}
+        </div>
+      )}
+    </div>
+  );
+}
+createRoot(document.getElementById("root")!).render(<App />);
