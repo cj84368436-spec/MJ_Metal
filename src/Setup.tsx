@@ -15,15 +15,18 @@ export function Setup({
   const [ids, setIds] = useState<string[]>([]);
   return (
     <section className="flow">
-      <span className="eyebrow">
-        {pack.title} · {price(pack)}
-      </span>
+      <span className="eyebrow">{pack.title}</span>
       <h1>{manual ? "직접 다섯 장을 골라요" : "오늘의 다섯 장"}</h1>
       <p>
         {manual
           ? ids.length + " / 5장 골랐어요"
           : "15장 중에서 오늘 묻고 싶은 다섯 장만 골라요."}
       </p>
+      <small className="muted-note">
+        {pack.price_krw
+          ? "보내기는 무료예요. 결과는 첫 카드까지 무료로 보여드려요."
+          : "보내기도 결과도 전부 무료예요."}
+      </small>
       {pack.id === "pack4" && (
         <p className="notice small">
           19+ 성인 카드예요. 스킨십·외박처럼 말로 꺼내기 어려운 것만 담았어요.
@@ -191,7 +194,7 @@ export function Purchase({
           ? "여는 중…"
           : error
             ? "다시 시도"
-            : price(pack) + "로 열기"}
+            : price(pack) + "으로 열기"}
       </button>
       <small className="sheet-note">실제 청구 없이 테스트로 열어요.</small>
       {error && <p role="alert">{error}</p>}
