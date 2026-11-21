@@ -515,11 +515,11 @@
             },
             {
               "value": "maybe",
-              "label": "당황할 듯"
+              "label": "조금 놀랄 듯"
             },
             {
               "value": "no",
-              "label": "조금 놀랄 듯"
+              "label": "당황할 듯"
             }
           ],
           "matchMessage": "먼저 잡아도 괜찮대.",
