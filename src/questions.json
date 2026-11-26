@@ -1,7 +1,7 @@
 {
   "version": "4.0.0",
   "app": "secret-five",
-  "name": "비밀 다섯 장",
+  "name": "썸 속마음 질문",
   "description": "앱인토스 비게임 미니앱 60문항 풀. 한 판 = 5문항. 둘 다 yes인 카드만 공개한다.",
   "answer_values": {
     "yes": "긍정",

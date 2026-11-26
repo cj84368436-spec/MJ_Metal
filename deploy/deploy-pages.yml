@@ -1,6 +1,6 @@
 name: Deploy web preview
 
-# Builds the browser build of 비밀 다섯 장 and publishes it to GitHub Pages at
+# Builds the browser build of 썸 속마음 질문 and publishes it to GitHub Pages at
 # https://cj84368436-spec.github.io/MJ_Metal/ so it can be opened on a phone.
 on:
   push:

@@ -42,7 +42,7 @@ async function exportImage(result: Result) {
   c.stroke();
   c.fillStyle = "#1B1917";
   c.font = "600 40px sans-serif";
-  c.fillText("비밀 다섯 장", 100, 150);
+  c.fillText("썸 속마음 질문", 100, 150);
   c.fillStyle = "#B4493A";
   c.font = "600 108px sans-serif";
   c.fillText(result.matched + " / 5", 96, 320);
@@ -69,7 +69,7 @@ async function exportImage(result: Result) {
     canvas.toBlob(res, "image/png"),
   );
   if (!blob) throw new Error();
-  const file = new File([blob], "비밀-다섯-장.png", { type: "image/png" });
+  const file = new File([blob], "썸-속마음-질문.png", { type: "image/png" });
   if (navigator.canShare?.({ files: [file] }))
     await navigator.share({ files: [file] });
   else {

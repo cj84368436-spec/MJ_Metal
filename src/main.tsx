@@ -289,13 +289,13 @@ function App() {
         <div className="topbar">
           <button
             className="brand"
-            aria-label="비밀 다섯 장 홈"
+            aria-label="썸 속마음 질문 홈"
             onClick={() => go("/")}
           >
             <span className="brand-symbol">
               <LockKeyhole size={15} />
             </span>
-            비밀 다섯 장
+            썸 속마음 질문
           </button>
           <nav aria-label="주 메뉴">
             <button
