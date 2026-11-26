@@ -15,7 +15,9 @@ GitHub Pages가 켜져 있고 소스는 **Deploy from a branch → gh-pages / (r
 - 주소: https://cj84368436-spec.github.io/MJ_Metal/ (HTTPS 강제)
 - 코드 갱신 후 재배포: `bash /workspace/mjmetal-preview-deploy.sh`
   (코드를 받아 빌드하고 gh-pages에 푸시한 뒤 HTTP 200과 자산 응답까지 확인합니다)
-- 웹 미리보기는 Supabase 환경변수가 없어 `mockStore`(브라우저 localStorage)로 동작합니다.
+- 웹 미리보기는 `VITE_DATA_MODE=mock`으로 빌드해 브라우저 localStorage(`mockStore`)로 동작합니다.
+  `.env.local`은 `.ait`(토스 앱) 빌드에만 쓰고, 미리보기 빌드에서만 이 값으로 덮어씁니다.
+  덕분에 미리보기에서 만든 방이 실제 Supabase에 쌓이지 않고, 보상형 광고도 모의 시청으로 체험할 수 있습니다.
 
 ## 나중에 자동 배포로 바꾸려면
 
