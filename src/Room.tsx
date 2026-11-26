@@ -222,7 +222,7 @@ export function Room({ id, guest, step, go, replay, toast }: Props) {
               setPurchase(false);
               toast(
                 product === "pack"
-                  ? "심장 간질간질 이용권을 열었어요"
+                  ? `${pack.title} 팩을 열었어요`
                   : "이번 방의 결과를 열었어요",
               );
             }}

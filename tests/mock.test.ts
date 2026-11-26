@@ -117,7 +117,7 @@ it("겹친 카드가 한 장이거나 무료 팩이면 광고 버튼을 보여�
   expect(viewRoom(free, null).ad).toBe("none");
 });
 
-it("팩 이용권은 심장 간질간질의 이번 결과와 이후 만든 방에 적용한다", async () => {
+it("팩 이용권은 '내가 그렇게 좋아?'의 이번 결과와 이후 만든 방에 적용한다", async () => {
   const pack = packs[1],
     ids = pack.questions.slice(0, 5).map((q) => q.id);
   const create = () => createRoom(pack, ids, Array(5).fill("yes"));
