@@ -168,8 +168,12 @@ type Snapshot = {
   opened: string[] | null;
   unlocked: boolean;
 };
-// 004 마이그레이션이 없는 서버에는 광고 보상 RPC가 없다. 한 번만 확인하고 기억한다.
+// 광고 보상 RPC가 없는 서버는 한 번만 확인하고 기억한다.
 const noAdBonus = new Set<string>();
+/**
+ * 보상형 광고 보상 조회. 004 마이그레이션이 없는 서버에는 `secret_five_ad`가
+ * 없어서 한 번만 확인하고 광고 버튼을 숨긴다.
+ */
 async function adBonusState(id: string, token: string) {
   if (noAdBonus.has(endpoint ?? "")) return null;
   try {
@@ -178,7 +182,8 @@ async function adBonusState(id: string, token: string) {
       token,
     });
   } catch (e) {
-    if ((e as { code?: string }).code === "INVALID_ACTION")
+    const code = (e as { code?: string }).code ?? "";
+    if (code === "INVALID_ACTION" || code.startsWith("PGRST"))
       noAdBonus.add(endpoint ?? "");
     return null;
   }
