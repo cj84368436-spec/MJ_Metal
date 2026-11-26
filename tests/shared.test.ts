@@ -24,6 +24,7 @@ beforeAll(async () => {
   await db.exec(
     readFileSync("supabase/migrations/003_pack_pass_metrics.sql", "utf8"),
   );
+  await db.exec(readFileSync("supabase/migrations/004_rewarded_ad.sql", "utf8"));
   await db.exec("set role anon");
 }, 20000);
 afterAll(() => db.close());
@@ -39,6 +40,13 @@ const create = {
 async function call(op: string, args: object) {
   const { rows } = await db.query<{ value: any }>(
     "select public.secret_five($1,$2::jsonb) as value",
+    [op, JSON.stringify(args)],
+  );
+  return rows[0].value;
+}
+async function callAd(op: string, args: object) {
+  const { rows } = await db.query<{ value: any }>(
+    "select public.secret_five_ad($1,$2::jsonb) as value",
     [op, JSON.stringify(args)],
   );
   return rows[0].value;
@@ -366,4 +374,51 @@ it("keeps pre-migration room unlocks without issuing a pass or recounting histor
   expect(await call("test_unlock", credentials(old))).toBe(true);
   await call("answer", { ...credentials(old), answers: yes });
   expect(await metrics()).toEqual([]);
+});
+
+it("광고 보상은 방마다 한 번만, 겹친 두 번째 카드 하나를 내보낸다", async () => {
+  const r = room("reward01");
+  await complete(r);
+  const seat = credentials(r);
+  await expect(
+    callAd("ad_reward", { ...seat, token: token("X") }),
+  ).rejects.toThrow(/INVALID_LINK/);
+  await expect(callAd("open", seat)).rejects.toThrow(/INVALID_ACTION/);
+  expect(await callAd("ad_state", seat)).toEqual({ bonus: false, card: null });
+  const matched = r.ids.filter((_, i) => r.answers[i] === "yes");
+  expect(matched).toHaveLength(4);
+  expect(await callAd("ad_reward", seat)).toEqual({
+    bonus: true,
+    card: matched[1],
+  });
+  // 두 번째 시청은 카드를 더 주지 않고, 반대 좌석도 같은 한 장을 본다.
+  expect(await callAd("ad_reward", credentials(r, "host"))).toEqual({
+    bonus: true,
+    card: matched[1],
+  });
+  expect((await call("state", credentials(r, "host"))).opened).toEqual(
+    matched.slice(0, 1),
+  );
+  // 결제로 방을 다 열면 광고 카드는 따로 내보내지 않는다.
+  await enablePurchases();
+  await call("test_unlock", seat);
+  expect(await callAd("ad_state", seat)).toEqual({ bonus: true, card: null });
+});
+
+it("광고 보상은 결과와 겹친 카드, 유료 방 조건을 확인한다", async () => {
+  const early = room("reward02");
+  await call("create", early);
+  await expect(callAd("ad_reward", credentials(early))).rejects.toThrow(
+    /NO_RESULT/,
+  );
+  const few = room("reward03");
+  await complete(few, {}, ["yes", "no", "no", "no", "no"]);
+  await expect(callAd("ad_reward", credentials(few))).rejects.toThrow(
+    /NO_LOCKED_MATCHES/,
+  );
+  const free = room("reward04", 1);
+  await complete(free);
+  await expect(callAd("ad_reward", credentials(free))).rejects.toThrow(
+    /NO_LOCKED_MATCHES/,
+  );
 });

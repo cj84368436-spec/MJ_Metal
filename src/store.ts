@@ -1,5 +1,6 @@
 import {
   Answer,
+  AdState,
   Pack,
   packs,
   Result,
@@ -153,6 +154,8 @@ export type RoomData = {
   created: number;
   guestToken: string;
   unlocked: boolean;
+  /** 결과 화면의 광고 보상 상태. */
+  ad: AdState;
   questions: ReturnType<typeof mock.viewRoom>["questions"];
   result: Result | null;
 };
@@ -165,6 +168,21 @@ type Snapshot = {
   opened: string[] | null;
   unlocked: boolean;
 };
+// 004 마이그레이션이 없는 서버에는 광고 보상 RPC가 없다. 한 번만 확인하고 기억한다.
+const noAdBonus = new Set<string>();
+async function adBonusState(id: string, token: string) {
+  if (noAdBonus.has(endpoint ?? "")) return null;
+  try {
+    return await rpc<{ bonus: boolean; card: string | null }>("ad_state", {
+      id,
+      token,
+    });
+  } catch (e) {
+    if ((e as { code?: string }).code === "INVALID_ACTION")
+      noAdBonus.add(endpoint ?? "");
+    return null;
+  }
+}
 export async function viewRoom(
   id: string,
   guest: string | null,
@@ -181,7 +199,8 @@ export async function viewRoom(
   const pack = packs.find((p) => p.id === s.pack)!;
   const qs = (ids: string[] | null) =>
     (ids ?? []).map((qid) => pack.questions.find((q) => q.id === qid)!);
-  const result: Result | null =
+  const unlocked = s.unlocked || pack.price_krw === 0;
+  let result: Result | null =
     s.matched === null
       ? null
       : {
@@ -191,13 +210,31 @@ export async function viewRoom(
           locked: s.matched - (s.opened?.length ?? 0),
           sealed: 5 - s.matched,
         };
+  let ad: AdState = "none";
+  if (result && !unlocked && result.locked > 0) {
+    const info = await adBonusState(id, token);
+    if (info?.bonus && info.card && !result.opened.some((q) => q.id === info.card)) {
+      const bonus = qs([info.card])[0];
+      if (bonus) {
+        result = {
+          ...result,
+          opened: [...result.opened, bonus],
+          locked: result.locked - 1,
+          adBonusId: bonus.id,
+        };
+        mock.markAdBonusSeen(id);
+      }
+    }
+    ad = info ? (info.bonus ? "used" : "available") : "none";
+  }
   if (host && !host.done && result) put("host." + id, { ...host, done: true });
   return {
     pack,
     nick: s.nick,
     created: s.created,
     guestToken: guest ?? host!.guest,
-    unlocked: s.unlocked || pack.price_krw === 0,
+    unlocked,
+    ad,
     questions: qs(s.ids),
     result,
   };
@@ -231,6 +268,19 @@ export async function unlockRoom(
     }
     put("trial-pass." + passPackId, true);
   } else await rpc("test_unlock", { id, token });
+}
+/**
+ * 보상형 광고 보상을 방에 기록한다. 한 방에 한 번만 열린다.
+ * 광고를 끝까지 본 뒤에만 부른다.
+ */
+export async function claimAdBonus(id: string, guest: string | null) {
+  if (!shared) await mock.claimAd(id, guest);
+  else {
+    const token = guest ?? get<Entry | null>("host." + id, null)?.host;
+    if (!token) throw new Error(messages.INVALID_LINK);
+    await rpc("ad_reward", { id, token });
+  }
+  mock.markAdBonusSeen(id);
 }
 export async function setNickname(id: string, nick: string) {
   if (!shared) return mock.setNickname(id, nick);

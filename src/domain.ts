@@ -32,6 +32,10 @@ export const packs: Pack[] = (data.packs as Pack[]).map((pack) => ({
 }));
 /** 잠금 해제 전에 무료로 열리는 겹친 카드 수. */
 export const previewCards = 1;
+/** 방마다 한 번, 보상형 광고로 더 여는 카드 수. */
+export const adBonusCards = 1;
+/** 결과 화면의 광고 보상 상태. none이면 광고 버튼을 숨긴다. */
+export type AdState = "none" | "available" | "used";
 export type Product = "room" | "pack";
 export const passPackId = "pack2";
 export const passPrice = "3,300원";
@@ -83,24 +87,30 @@ export type Result = {
   locked: number;
   /** 서로 답이 달라 끝까지 비밀로 남는 카드 수. */
   sealed: number;
+  /** 보상형 광고로 열린 카드. 광고를 보지 않았으면 없다. */
+  adBonusId?: string;
 };
 export function matchCards(
   questions: Question[],
   host: Answer[],
   guest: Answer[],
   unlocked: boolean,
+  adBonus = false,
 ): Result {
   if (questions.length !== 5 || !complete(host) || !complete(guest))
     throw new Error("카드 다섯 장에 모두 답해주세요.");
   const matched = questions.filter(
     (_, i) => host[i] === "yes" && guest[i] === "yes",
   );
-  const opened = matched.slice(0, unlocked ? 5 : previewCards);
+  const free = previewCards + (adBonus ? adBonusCards : 0);
+  const opened = matched.slice(0, unlocked ? matched.length : free);
+  const bonus = unlocked || !adBonus ? undefined : opened[previewCards];
   return {
     matched: matched.length,
     percent: matched.length * 20,
     opened,
     locked: matched.length - opened.length,
     sealed: 5 - matched.length,
+    ...(bonus && { adBonusId: bonus.id }),
   };
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { ArrowRight, Download, LockKeyhole } from "lucide-react";
-import { Pack, price, Result } from "./domain";
-import { buzz, reduced } from "./bridge";
+import { ArrowRight, Download, LockKeyhole, Play } from "lucide-react";
+import { AdState, Pack, price, Result } from "./domain";
+import { buzz, reduced, showRewardedAd, adsAvailable, AdPhase } from "./bridge";
 
 function usePercent(target: number) {
   const [n, setN] = useState<number | null>(() => (reduced() ? target : null));
@@ -87,7 +87,9 @@ type Props = {
   unlocked: boolean;
   demo?: boolean;
   guest?: boolean;
+  ad?: AdState;
   onUnlock?: () => void;
+  onAdReward?: () => void | Promise<void>;
   again: () => void;
   replayBusy?: boolean;
   home: () => void;
@@ -98,18 +100,44 @@ export function Results({
   unlocked,
   demo,
   guest,
+  ad = "none",
   onUnlock,
+  onAdReward,
   again,
   replayBusy = false,
   home,
 }: Props) {
   const n = usePercent(result.percent);
   const [error, setError] = useState("");
+  const [phase, setPhase] = useState<AdPhase | "">("");
   useEffect(() => {
     buzz("success");
   }, []);
   const spend = price(pack);
   const full = unlocked || result.locked === 0;
+  const canAd = ad === "available" && adsAvailable();
+  const watching = phase !== "";
+  async function watchAd() {
+    if (watching) return;
+    setError("");
+    setPhase("loading");
+    try {
+      const outcome = await showRewardedAd((next) => setPhase(next));
+      if (outcome === "reward") {
+        buzz("success");
+        await onAdReward?.();
+      } else
+        setError(
+          outcome === "closed"
+            ? "광고를 끝까지 봐야 카드가 열려요. 다시 볼 수 있어요."
+            : "광고를 불러오지 못했어요. 잠시 뒤 다시 시도해주세요.",
+        );
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setPhase("");
+    }
+  }
   return (
     <section className="flow result">
       <header className="result-head">
@@ -143,7 +171,9 @@ export function Results({
           key={q.id}
           style={{ animationDelay: 140 + i * 90 + "ms" }}
         >
-          <span className="tag">함께 열린 카드</span>
+          <span className="tag">
+            {q.id === result.adBonusId ? "광고로 연 카드" : "함께 열린 카드"}
+          </span>
           <h2>{q.question}</h2>
           <p className="match">{q.matchMessage}</p>
           {full && (
@@ -171,9 +201,30 @@ export function Results({
           {demo ? (
             <small>예시라서 결제 없이 보여드려요.</small>
           ) : (
-            <button className="cta" onClick={onUnlock}>
-              겹친 카드 {result.locked}장 더 열기 · {spend}
-            </button>
+            <>
+              <button className="cta" onClick={onUnlock}>
+                겹친 카드 {result.locked}장 더 열기 · {spend}
+              </button>
+              {canAd && (
+                <>
+                  <button className="ghost ad" disabled={watching} onClick={watchAd}>
+                    {!watching && <Play size={15} />}
+                    {phase === "loading"
+                      ? "광고 준비 중…"
+                      : phase === "watching"
+                        ? "광고 보는 중…"
+                        : "광고 보고 1장 무료로 더 열기"}
+                  </button>
+                  <small className="ad-note">
+                    광고 한 편을 끝까지 보면 이 방에서 한 번, 겹친 카드 1장이 바로
+                    열려요.
+                  </small>
+                </>
+              )}
+              {ad === "used" && (
+                <small className="ad-note">광고로 이 방의 카드 1장을 열었어요.</small>
+              )}
+            </>
           )}
         </section>
       )}

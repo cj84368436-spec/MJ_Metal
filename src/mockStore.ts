@@ -9,6 +9,7 @@ import {
   selectFive,
   passPackId,
   Product,
+  AdState,
 } from "./domain";
 
 const prefix = "secret-five.v1.";
@@ -34,6 +35,22 @@ export function activateSeat(id: string, guest: string | null) {
   const room = access(id, guest);
   globalThis.sessionStorage?.setItem(prefix + "actor", seatActor(room, guest));
 }
+/** 방 단위 보상형 광고 기록. 방 기록과 별개로 남겨 새로 고쳐도 복원한다. */
+const adKey = (id: string) => "secret-five.ad." + id;
+export function adBonusSeen(id: string) {
+  try {
+    return localStorage.getItem(adKey(id)) !== null;
+  } catch {
+    return false;
+  }
+}
+export function markAdBonusSeen(id: string) {
+  try {
+    localStorage.setItem(adKey(id), String(Date.now()));
+  } catch {
+    /* 저장 공간이 막혀도 이번 화면은 동작한다. */
+  }
+}
 function passKey(pack: Pack, buyer: Actor) {
   return "trial-pass." + buyer + "." + pack.id;
 }
@@ -58,6 +75,8 @@ type Room = {
   guestAnswers?: Answer[];
   /** 결과 잠금 해제(이 방에서 한 번 결제). 무료 팩은 만들 때부터 true. */
   unlocked?: boolean;
+  /** 보상형 광고로 카드 한 장을 더 연 방. 한 방에 한 번만 쓸 수 있다. */
+  adBonus?: boolean;
   passBuyer?: Actor;
   redealIds?: string[];
   nick: string;
@@ -117,15 +136,24 @@ export function viewRoom(id: string, guest: string | null) {
   const pack = packs.find((p) => p.id === room.packId)!;
   const qs = room.ids.map((id) => pack.questions.find((q) => q.id === id)!);
   const unlocked = !!room.unlocked || isFree(pack);
+  // 광고 시청 여부는 방 기록과 방 단위 localStorage 키 둘 다에서 복원한다.
+  const adBonus = !!room.adBonus || adBonusSeen(id);
   const result = room.guestAnswers
-    ? matchCards(qs, room.hostAnswers, room.guestAnswers, unlocked)
+    ? matchCards(qs, room.hostAnswers, room.guestAnswers, unlocked, adBonus)
     : null;
+  const ad: AdState =
+    !result || unlocked || result.locked === 0
+      ? "none"
+      : adBonus
+        ? "used"
+        : "available";
   return {
     pack,
     nick: room.nick,
     created: room.created,
     guestToken: room.guest,
     unlocked,
+    ad,
     questions: result ? [] : qs,
     result,
   };
@@ -190,6 +218,17 @@ export async function unlock(
       unlocked: true,
       passBuyer: product === "pack" ? seatActor(room, guest) : undefined,
     });
+  });
+}
+/** 보상형 광고를 본 뒤 방의 카드 한 장을 더 연다. 한 방에 한 번만. */
+export async function claimAd(id: string, guest: string | null) {
+  await editRoom(() => {
+    const room = access(id, guest);
+    if (room.adBonus) return;
+    const result = viewRoom(id, guest).result;
+    if (!result) throw new Error("결과가 열리면 광고로 카드를 더 열 수 있어요.");
+    if (result.locked === 0) throw new Error("더 열 수 있는 카드가 없어요.");
+    write("room." + id, { ...room, adBonus: true });
   });
 }
 export async function setNickname(id: string, text: string) {

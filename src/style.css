@@ -844,6 +844,19 @@ main {
 .paywall .cta {
   margin-top: 0;
 }
+.paywall .ghost {
+  min-height: 46px;
+  margin-top: 8px;
+  font-size: 13.5px;
+  font-weight: 550;
+  color: var(--sub);
+}
+.paywall .ad-note {
+  margin-top: 8px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--weak);
+}
 .paywall small {
   color: var(--weak);
 }

@@ -8,7 +8,7 @@ import {
   Send,
 } from "lucide-react";
 import { Answer, Pack, Referral } from "./domain";
-import { setNickname, submitGuest, unlockRoom, shared, redeal } from "./store";
+import { setNickname, submitGuest, unlockRoom, shared, redeal, claimAdBonus } from "./store";
 import { buzz, shareText, inviteURL } from "./bridge";
 import { CardStack } from "./CardStack";
 import { useRoom } from "./useRoom";
@@ -175,7 +175,16 @@ export function Room({ id, guest, step, go, replay, toast }: Props) {
           result={data.result}
           unlocked={data.unlocked}
           guest={!!guest}
+          ad={data.ad}
           onUnlock={() => setPurchase(true)}
+          onAdReward={async () => {
+            try {
+              await claimAdBonus(id, guest);
+            } catch {
+              toast("광고 보상을 열지 못했어요. 잠시 뒤 다시 시도해주세요.");
+            }
+            refresh();
+          }}
           replayBusy={replayBusy}
           again={async () => {
             if (replayBusy) return;
