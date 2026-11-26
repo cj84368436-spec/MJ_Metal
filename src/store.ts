@@ -49,6 +49,12 @@ const messages: Record<string, string> = {
   TEST_PURCHASE_DISABLED: "이 서버에서는 모의 결제가 꺼져 있어요.",
   TOO_MANY: "잠시 뒤 다시 시도해주세요.",
 };
+/**
+ * 광고 보상(`ad_state`, `ad_reward`)은 004 마이그레이션이 따로 만든
+ * `secret_five_ad`가 맡는다. 나머지는 기존 `secret_five`로 보낸다.
+ * 한 함수로 몰아 보내면 광고 op가 `INVALID_ACTION`으로 떨어진다.
+ */
+const adFunction = (op: string) => op.startsWith("ad_");
 async function rpc<T>(op: string, args: object): Promise<T> {
   if (!endpoint || !apiKey)
     throw new Error("공유 방 서버 설정을 확인해주세요.");
@@ -57,7 +63,8 @@ async function rpc<T>(op: string, args: object): Promise<T> {
     apikey: apiKey,
   };
   if (apiKey.startsWith("ey")) headers.Authorization = "Bearer " + apiKey;
-  const response = await fetch(endpoint + "/rest/v1/rpc/secret_five", {
+  const fn = adFunction(op) ? "secret_five_ad" : "secret_five";
+  const response = await fetch(endpoint + "/rest/v1/rpc/" + fn, {
     method: "POST",
     headers,
     body: JSON.stringify({ op, args }),
@@ -69,7 +76,7 @@ async function rpc<T>(op: string, args: object): Promise<T> {
         messages[data.message] ??
           "방 정보를 확인할 수 없어요. 잠시 뒤 다시 시도해주세요.",
       ),
-      { code: data.message },
+      { code: data.message, pgc: data.code, status: response.status },
     );
   return data as T;
 }
@@ -182,8 +189,15 @@ async function adBonusState(id: string, token: string) {
       token,
     });
   } catch (e) {
-    const code = (e as { code?: string }).code ?? "";
-    if (code === "INVALID_ACTION" || code.startsWith("PGRST"))
+    const err = e as { code?: string; pgc?: string; status?: number };
+    const code = err.code ?? "";
+    // 004 미적용 서버는 함수가 없어 PostgREST 404(PGRST202)를 돌려준다.
+    if (
+      code === "INVALID_ACTION" ||
+      code.startsWith("PGRST") ||
+      (err.pgc ?? "").startsWith("PGRST") ||
+      err.status === 404
+    )
       noAdBonus.add(endpoint ?? "");
     return null;
   }
