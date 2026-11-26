@@ -857,6 +857,9 @@ main {
   line-height: 1.5;
   color: var(--weak);
 }
+.paywall .ad-error {
+  color: var(--point);
+}
 .paywall small {
   color: var(--weak);
 }

@@ -109,6 +109,7 @@ export function Results({
 }: Props) {
   const n = usePercent(result.percent);
   const [error, setError] = useState("");
+  const [adError, setAdError] = useState("");
   const [phase, setPhase] = useState<AdPhase | "">("");
   useEffect(() => {
     buzz("success");
@@ -119,7 +120,7 @@ export function Results({
   const watching = phase !== "";
   async function watchAd() {
     if (watching) return;
-    setError("");
+    setAdError("");
     setPhase("loading");
     try {
       const outcome = await showRewardedAd((next) => setPhase(next));
@@ -127,13 +128,13 @@ export function Results({
         buzz("success");
         await onAdReward?.();
       } else
-        setError(
+        setAdError(
           outcome === "closed"
             ? "광고를 끝까지 봐야 카드가 열려요. 다시 볼 수 있어요."
             : "광고를 불러오지 못했어요. 잠시 뒤 다시 시도해주세요.",
         );
     } catch (e) {
-      setError((e as Error).message);
+      setAdError((e as Error).message);
     } finally {
       setPhase("");
     }
@@ -219,6 +220,11 @@ export function Results({
                     광고 한 편을 끝까지 보면 이 방에서 한 번, 겹친 카드 1장이 바로
                     열려요.
                   </small>
+                  {adError && (
+                    <small className="ad-note ad-error" role="alert">
+                      {adError}
+                    </small>
+                  )}
                 </>
               )}
               {ad === "used" && (
