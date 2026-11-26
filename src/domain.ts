@@ -32,6 +32,10 @@ export const packs: Pack[] = (data.packs as Pack[]).map((pack) => ({
 }));
 /** 잠금 해제 전에 무료로 열리는 겹친 카드 수. */
 export const previewCards = 1;
+export type Product = "room" | "pack";
+export const passPackId = "pack2";
+export const passPrice = "3,300원";
+export type Referral = { room: string; guest: string };
 export const lockedText = "둘 다 좋다고 한 카드예요.";
 export const price = (p: Pack) =>
   p.price_krw ? p.price_krw.toLocaleString("ko-KR") + "원" : "무료";

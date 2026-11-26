@@ -1273,3 +1273,11 @@ dialog h1 {
     animation: none;
   }
 }
+
+.offers { border: 0; padding: 0; margin: 18px 0; display: grid; gap: 8px; }
+.offers legend { color: var(--sub); font-size: 13px; margin-bottom: 8px; }
+.offer { border: 1px solid var(--line-strong); border-radius: 14px; padding: 12px; display: grid; grid-template-columns: auto 1fr auto; align-items: start; gap: 8px; cursor:pointer; }
+.offer.active { border-color: var(--point); background: var(--point-soft); }
+.offer input { width:16px; height:16px; margin:4px 0 0; accent-color:var(--point); }
+.offer small { display:block; color:var(--sub); margin-top:4px; font-size:13px; }
+.offer strong { white-space:nowrap; }

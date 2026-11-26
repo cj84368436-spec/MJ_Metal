@@ -89,6 +89,7 @@ type Props = {
   guest?: boolean;
   onUnlock?: () => void;
   again: () => void;
+  replayBusy?: boolean;
   home: () => void;
 };
 export function Results({
@@ -99,6 +100,7 @@ export function Results({
   guest,
   onUnlock,
   again,
+  replayBusy = false,
   home,
 }: Props) {
   const n = usePercent(result.percent);
@@ -107,6 +109,7 @@ export function Results({
     buzz("success");
   }, []);
   const spend = price(pack);
+  const full = unlocked || result.locked === 0;
   return (
     <section className="flow result">
       <header className="result-head">
@@ -121,7 +124,7 @@ export function Results({
             </h1>
             <p className="result-sub">
               겹친 비율 {n === null ? "…" : n + "%"}
-              {unlocked ? " · 카드마다 한마디까지 열렸어요" : ""}
+              {full ? " · 카드마다 한마디까지 열렸어요" : ""}
             </p>
           </>
         ) : (
@@ -143,7 +146,7 @@ export function Results({
           <span className="tag">함께 열린 카드</span>
           <h2>{q.question}</h2>
           <p className="match">{q.matchMessage}</p>
-          {unlocked && (
+          {full && (
             <div className="follow">
               <span>이어질 한마디</span>
               <p>{q.followUp}</p>
@@ -163,14 +166,13 @@ export function Results({
           </div>
           <h3>나머지 {result.locked}장도 통했어요</h3>
           <p>
-            둘 다 좋다고 한 카드예요. 카드마다 이어질 한마디까지 한 번에
-            열려요.
+            둘 다 좋다고 한 카드예요. 카드마다 이어질 한마디까지 한 번에 열려요.
           </p>
           {demo ? (
             <small>예시라서 결제 없이 보여드려요.</small>
           ) : (
             <button className="cta" onClick={onUnlock}>
-              나머지 설레는 답 모두 열기 · {spend}
+              겹친 카드 {result.locked}장 더 열기 · {spend}
             </button>
           )}
         </section>
@@ -178,7 +180,7 @@ export function Results({
 
       {result.sealed > 0 && (
         <p className="sealed">
-          나머지 {result.sealed}장은 서로 답이 달라서, 끝까지 비밀이에요.
+          공개되지 않은 {result.sealed}장의 답은 둘만의 비밀로 남아요.
         </p>
       )}
 
@@ -190,9 +192,20 @@ export function Results({
           </button>
         ) : (
           <>
-            <button className="ghost" onClick={again}>
-              {guest ? "나도 카드 만들기" : "같은 팩으로 새 5장"}
+            <button
+              className={result.locked ? "ghost" : "cta"}
+              disabled={replayBusy}
+              onClick={again}
+            >
+              {replayBusy
+                ? "새 카드 고르는 중…"
+                : guest
+                  ? "이번엔 내가 새 5장 보내기"
+                  : "같은 팩으로 새 5장"}
             </button>
+            <small className="center-note">
+              방금 답한 다섯 장은 빼고 골라요.
+            </small>
             {pack.id !== "pack4" && (
               <button
                 className="text-btn"

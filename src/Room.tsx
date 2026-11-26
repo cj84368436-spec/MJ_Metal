@@ -7,8 +7,8 @@ import {
   Link as LinkIcon,
   Send,
 } from "lucide-react";
-import { Answer, Pack } from "./domain";
-import { setNickname, submitGuest, unlockRoom, shared } from "./store";
+import { Answer, Pack, Referral } from "./domain";
+import { setNickname, submitGuest, unlockRoom, shared, redeal } from "./store";
 import { buzz, shareText, inviteURL } from "./bridge";
 import { CardStack } from "./CardStack";
 import { useRoom } from "./useRoom";
@@ -21,15 +21,16 @@ type Props = {
   guest: string | null;
   step: string | null;
   go: (url: string, replace?: boolean) => void;
-  start: (p: Pack) => void;
+  replay: (p: Pack, ids: string[], referral?: Referral) => void;
   toast: (msg: string) => void;
 };
-export function Room({ id, guest, step, go, start, toast }: Props) {
+export function Room({ id, guest, step, go, replay, toast }: Props) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [edit, setEdit] = useState(false);
   const [fallback, setFallback] = useState(false);
   const [nick, setNick] = useState("");
+  const [replayBusy, setReplayBusy] = useState(false);
   const [purchase, setPurchase] = useState(false);
   const key = "guest-draft." + id + "." + guest;
   const [answers, setAnswers] = useState<Answer[]>(() =>
@@ -158,10 +159,7 @@ export function Room({ id, guest, step, go, start, toast }: Props) {
       {switchOpen && (
         <>
           <small>같은 브라우저에서 두 역할을 번갈아 체험해요.</small>
-          <button
-            className="ghost"
-            onClick={() => go(guest ? base : invite)}
-          >
+          <button className="ghost" onClick={() => go(guest ? base : invite)}>
             {guest ? "보낸 사람으로 보기" : "받는 사람으로 보기"}{" "}
             <ArrowRight size={16} />
           </button>
@@ -178,20 +176,53 @@ export function Room({ id, guest, step, go, start, toast }: Props) {
           unlocked={data.unlocked}
           guest={!!guest}
           onUnlock={() => setPurchase(true)}
-          again={() => start(pack)}
+          replayBusy={replayBusy}
+          again={async () => {
+            if (replayBusy) return;
+            setReplayBusy(true);
+            setError("");
+            try {
+              const ids = await redeal(id, guest, pack);
+              replay(pack, ids, guest ? { room: id, guest } : undefined);
+            } catch (e) {
+              setError((e as Error).message);
+              setReplayBusy(false);
+            }
+          }}
           home={() => go("/")}
         />
-        {purchase && (
+        {purchase && data.result.locked > 0 && (
           <Purchase
             pack={pack}
             cancel={() => setPurchase(false)}
-            confirm={async () => {
-              await unlockRoom(id, guest);
+            remaining={data.result.locked}
+            confirm={async (product) => {
+              try {
+                await unlockRoom(id, guest, product);
+              } catch (e) {
+                if ((e as { code?: string }).code === "ALREADY_UNLOCKED") {
+                  setPurchase(false);
+                  refresh();
+                  toast("이미 이 방의 결과가 열렸어요");
+                  return;
+                }
+                throw e;
+              }
+
               refresh();
               setPurchase(false);
-              toast("설레는 답을 열었어요");
+              toast(
+                product === "pack"
+                  ? "심장 간질간질 이용권을 열었어요"
+                  : "이번 방의 결과를 열었어요",
+              );
             }}
           />
+        )}
+        {error && (
+          <p className="error" role="alert">
+            {error}
+          </p>
         )}
         {switcher}
       </>
@@ -227,14 +258,16 @@ export function Room({ id, guest, step, go, start, toast }: Props) {
             </h1>
             <p>다섯 장에 답하면, 둘 다 좋다고 한 카드만 열려요.</p>
             <div className="notice small">
-              네가 뭘 골랐는지, 상대는 알 수 없어요. 서로 다른 카드는
-              아무것도 알려주지 않아요.
+              네가 뭘 골랐는지, 상대는 알 수 없어요. 서로 다른 카드는 아무것도
+              알려주지 않아요.
             </div>
             <button className="cta" onClick={() => go(next("answer"))}>
               나도 답할래
               <ArrowRight size={18} />
             </button>
-            <small className="center-note">이 링크를 가진 사람만 참여할 수 있어요.</small>
+            <small className="center-note">
+              이 링크를 가진 사람만 참여할 수 있어요.
+            </small>
           </section>
         )
       ) : (
@@ -332,7 +365,9 @@ export function Room({ id, guest, step, go, start, toast }: Props) {
             나중에 보내기
           </button>
           <small className="center-note">
-            보내기는 무료예요. 결과는 첫 카드까지 무료로 열려요.
+            {data.unlocked
+              ? "이 방은 둘 다 좋다고 한 카드가 전부 열려요."
+              : "보내기는 무료예요. 결과는 첫 카드까지 무료로 열려요."}
           </small>
         </section>
       )}

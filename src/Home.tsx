@@ -1,3 +1,4 @@
+import { hasPass } from "./store";
 import { ArrowRight, Check } from "lucide-react";
 import { Pack, packs, price, isFree, Question } from "./domain";
 
@@ -46,8 +47,7 @@ export function Home({
           </h1>
           <p className="lede">
             보내면 상대도 몰래 답해요.
-            <br />
-            둘 다 좋다고 한 카드만 열려요.
+            <br />둘 다 좋다고 한 카드만 열려요.
           </p>
         </div>
         <CardFan questions={selected.questions} />
@@ -73,7 +73,11 @@ export function Home({
                 <small>{p.subtitle}</small>
               </span>
               <span className="pack-cost">
-                {isFree(p) ? "전부 무료" : "결과 " + price(p)}
+                {isFree(p)
+                  ? "전부 무료"
+                  : hasPass(p)
+                    ? "이용권 보유"
+                    : "결과 " + price(p)}
                 {p === selected && <Check size={15} />}
               </span>
             </button>
@@ -87,7 +91,9 @@ export function Home({
           {selected.title} ·{" "}
           {isFree(selected)
             ? "30초 · 가입 없이 · 결과 전부 무료"
-            : "30초 · 가입 없이 · 결과는 첫 카드까지 무료"}
+            : hasPass(selected)
+              ? "이용권으로 겹친 카드 전부 열기"
+              : "30초 · 가입 없이 · 결과는 첫 카드까지 무료"}
         </p>
       </section>
 

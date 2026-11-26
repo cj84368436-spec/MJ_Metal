@@ -1,7 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Check, Hand, Shuffle, X } from "lucide-react";
-import { Pack, price, selectFive } from "./domain";
-import { recent } from "./store";
+import {
+  Pack,
+  price,
+  selectFive,
+  Product,
+  passPrice,
+  passPackId,
+} from "./domain";
+import { recent, hasPass } from "./store";
 import { buzz, reduced } from "./bridge";
 
 export function Setup({
@@ -24,7 +31,9 @@ export function Setup({
       </p>
       <small className="muted-note">
         {pack.price_krw
-          ? "보내기는 무료예요. 결과는 첫 카드까지 무료로 보여드려요."
+          ? hasPass(pack)
+            ? "이용권으로 이 방의 겹친 카드가 전부 열려요."
+            : "보내기는 무료예요. 결과는 첫 카드까지 무료로 보여드려요."
           : "보내기도 결과도 전부 무료예요."}
       </small>
       {pack.id === "pack4" && (
@@ -55,7 +64,9 @@ export function Setup({
                 <label
                   key={q.id}
                   className={
-                    "pick" + (on ? " on" : "") + (!on && ids.length === 5 ? " muted" : "")
+                    "pick" +
+                    (on ? " on" : "") +
+                    (!on && ids.length === 5 ? " muted" : "")
                   }
                 >
                   <input
@@ -70,9 +81,7 @@ export function Setup({
                       )
                     }
                   />
-                  <span className="pick-box">
-                    {on && <Check size={14} />}
-                  </span>
+                  <span className="pick-box">{on && <Check size={14} />}</span>
                   <span>{q.question}</span>
                 </label>
               );
@@ -97,13 +106,18 @@ export function Setup({
 }
 export function Purchase({
   pack,
+  remaining,
   cancel,
   confirm,
 }: {
   pack: Pack;
+  remaining: number;
   cancel: () => void;
-  confirm: () => Promise<void>;
+  confirm: (product: Product) => Promise<void>;
 }) {
+  const [selection, setProduct] = useState<Product>("room");
+  const eligible = pack.id === passPackId && !hasPass(pack);
+  const product = eligible ? selection : "room";
   const ref = useRef<HTMLDialogElement>(null),
     timer = useRef(0),
     closing = useRef(false),
@@ -134,7 +148,7 @@ export function Purchase({
     timer.current = window.setTimeout(async () => {
       granting.current = true;
       try {
-        await confirm();
+        await confirm(product);
         buzz("success");
       } catch (e) {
         granting.current = false;
@@ -158,7 +172,7 @@ export function Purchase({
     >
       <div className="handle" />
       <div className="sheet-head">
-        <span className="eyebrow">결과 열기</span>
+        <span className="eyebrow">모의 결제</span>
         <button
           aria-label="닫기"
           className="icon-btn"
@@ -168,35 +182,51 @@ export function Purchase({
           <X />
         </button>
       </div>
-      <h1 id="purchase-title">설레는 답 모두 열기</h1>
-      <p className="sheet-price">{price(pack)}</p>
-      <ul className="benefits">
-        {[
-          "둘 다 좋다고 한 카드 전부",
-          "카드마다 이어질 한마디",
-          "이 결과, 일주일 동안 다시 보기",
-        ].map((s) => (
-          <li key={s}>
-            <Check size={16} />
-            {s}
-          </li>
-        ))}
-      </ul>
+      <h1 id="purchase-title">겹친 카드 {remaining}장 더 열기</h1>
+      <p>두 사람 모두 남은 카드와 이어질 한마디를 볼 수 있어요.</p>
+      {eligible ? (
+        <fieldset className="offers" disabled={state !== "ready"}>
+          <legend>이용 범위 선택</legend>
+          {(["room", "pack"] as const).map((value) => (
+            <label
+              key={value}
+              className={product === value ? "offer active" : "offer"}
+            >
+              <input
+                type="radio"
+                name="product"
+                value={value}
+                checked={product === value}
+                onChange={() => setProduct(value)}
+              />
+              <span>
+                <b>{value === "room" ? "이번 방만 열기" : "이 팩 계속 쓰기"}</b>
+                <small>
+                  {value === "room"
+                    ? "지금 함께 답한 방 1개"
+                    : "이번 방과 앞으로 이 기기에서 내가 만드는 ‘" +
+                      pack.title +
+                      "’ 방"}
+                </small>
+              </span>
+              <strong>{value === "room" ? price(pack) : passPrice}</strong>
+            </label>
+          ))}
+        </fieldset>
+      ) : (
+        <p className="sheet-price">이번 방 · {price(pack)}</p>
+      )}
       <p className="notice small">
         서로 다른 카드는 끝까지 비밀로 남아요. 상대의 답도 보이지 않아요.
       </p>
-      <button
-        className="cta"
-        disabled={state !== "ready"}
-        onClick={purchase}
-      >
+      <button className="cta" disabled={state !== "ready"} onClick={purchase}>
         {state === "paying"
           ? "여는 중…"
           : error
             ? "다시 시도"
-            : price(pack) + "으로 열기"}
+            : (product === "room" ? price(pack) : passPrice) + "으로 열기"}
       </button>
-      <small className="sheet-note">실제 청구 없이 테스트로 열어요.</small>
+      <small className="sheet-note">모의 결제 · 실제 청구 금액 0원</small>
       {error && <p role="alert">{error}</p>}
     </dialog>
   );

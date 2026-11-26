@@ -6,6 +6,9 @@ import {
   Pack,
   packs,
   validateFive,
+  selectFive,
+  passPackId,
+  Product,
 } from "./domain";
 
 const prefix = "secret-five.v1.";
@@ -16,6 +19,30 @@ function read<T>(key: string, fallback: T): T {
 function write(key: string, value: unknown) {
   localStorage.setItem(prefix + key, JSON.stringify(value));
 }
+// Keep the two simulated devices distinct even though their rooms share localStorage.
+type Actor = "a" | "b";
+function actor(): Actor {
+  return globalThis.sessionStorage?.getItem(prefix + "actor") === "b"
+    ? "b"
+    : "a";
+}
+function seatActor(room: Room, guest: string | null): Actor {
+  const owner = room.owner ?? "a";
+  return guest === null ? owner : owner === "a" ? "b" : "a";
+}
+export function activateSeat(id: string, guest: string | null) {
+  const room = access(id, guest);
+  globalThis.sessionStorage?.setItem(prefix + "actor", seatActor(room, guest));
+}
+function passKey(pack: Pack, buyer: Actor) {
+  return "trial-pass." + buyer + "." + pack.id;
+}
+export function hasPass(pack: Pack) {
+  return (
+    pack.id === passPackId &&
+    !!read<string | null>(passKey(pack, actor()), null)
+  );
+}
 export function recent(pack: Pack) {
   return read<string[][]>("recent." + pack.id, []);
 }
@@ -23,6 +50,7 @@ type Room = {
   id: string;
   packId: string;
   ids: string[];
+  owner?: Actor;
   host: string;
   guest: string;
   created: number;
@@ -30,6 +58,8 @@ type Room = {
   guestAnswers?: Answer[];
   /** 결과 잠금 해제(이 방에서 한 번 결제). 무료 팩은 만들 때부터 true. */
   unlocked?: boolean;
+  passBuyer?: Actor;
+  redealIds?: string[];
   nick: string;
 };
 export function token() {
@@ -53,11 +83,12 @@ export function createRoom(pack: Pack, ids: string[], answers: Answer[]) {
     id,
     packId: pack.id,
     ids,
+    owner: actor(),
     host: token(),
     guest: token(),
     created: Date.now(),
     hostAnswers: answers,
-    unlocked: isFree(pack),
+    unlocked: isFree(pack) || hasPass(pack),
     nick: "",
   };
   write("room." + id, room);
@@ -99,8 +130,9 @@ export function viewRoom(id: string, guest: string | null) {
     result,
   };
 }
-async function editRoom(id: string, update: () => void) {
-  if (navigator.locks) await navigator.locks.request(prefix + id, update);
+async function editRoom(update: () => void) {
+  if (navigator.locks)
+    await navigator.locks.request(prefix + "edit", async () => update());
   else update();
 }
 export async function submitGuest(
@@ -108,19 +140,56 @@ export async function submitGuest(
   guest: string,
   answers: Answer[],
 ) {
-  await editRoom(id, () => {
+  await editRoom(() => {
     const room = access(id, guest);
     if (room.guestAnswers) return;
     if (!complete(answers)) throw new Error("카드 다섯 장에 모두 답해주세요.");
     write("room." + id, { ...room, guestAnswers: answers });
   });
 }
-/** 모의 결제: 이 방의 결과 잠금을 해제한다. 두 좌석 모두 전체 결과를 본다. */
-export async function unlock(id: string, guest: string | null) {
-  await editRoom(id, () => {
+export function redeal(id: string, guest: string | null) {
+  const room = access(id, guest);
+  if (!room.guestAnswers)
+    throw new Error("결과가 열리면 새 판을 시작할 수 있어요.");
+  const pack = packs.find((p) => p.id === room.packId)!;
+  if (room.redealIds) return room.redealIds;
+  const next = selectFive(
+    {
+      ...pack,
+      questions: pack.questions.filter((q) => !room.ids.includes(q.id)),
+    },
+    recent(pack),
+  );
+  write("room." + id, { ...room, redealIds: next });
+  return next;
+}
+export async function unlock(
+  id: string,
+  guest: string | null,
+  product: Product = "room",
+) {
+  await editRoom(() => {
     const room = access(id, guest);
-    if (room.unlocked) return;
-    write("room." + id, { ...room, unlocked: true });
+    if (
+      room.unlocked &&
+      (product === "room" || room.passBuyer === seatActor(room, guest))
+    )
+      return;
+    const { result, pack } = viewRoom(id, guest);
+    if (!result?.locked) throw new Error("더 열 수 있는 카드가 없어요.");
+    if (product === "pack") {
+      if (pack.id !== passPackId) throw new Error("이 팩에는 이용권이 없어요.");
+      const key = passKey(pack, seatActor(room, guest));
+      const previous = read<string | null>(key, null);
+      if (previous && previous !== id)
+        throw new Error("이미 이 팩 이용권이 있어요.");
+      write(key, id);
+    }
+    write("room." + id, {
+      ...room,
+      unlocked: true,
+      passBuyer: product === "pack" ? seatActor(room, guest) : undefined,
+    });
   });
 }
 export async function setNickname(id: string, text: string) {
@@ -131,7 +200,7 @@ export async function setNickname(id: string, text: string) {
       /씨발|시발|병신|개새끼|fuck|shit/i.test(nick))
   )
     throw new Error("닉네임은 편안한 말로, 글자나 숫자 2~6자로 적어주세요.");
-  await editRoom(id, () => {
+  await editRoom(() => {
     const room = access(id, null);
     write("room." + id, { ...room, nick });
   });

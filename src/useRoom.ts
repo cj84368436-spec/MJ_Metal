@@ -22,8 +22,11 @@ export function useRoom(id: string, guest: string | null) {
         const data = await viewRoom(id, guest);
         if (!alive || current !== sequence) return;
         setState({ key, data });
-        if (!guest && !data.result && !document.hidden)
-          timer = window.setTimeout(read, 3000);
+        if (
+          ((!guest && !data.result) || !!data.result?.locked) &&
+          !document.hidden
+        )
+          timer = window.setTimeout(read, data.result ? 6000 : 3000);
       } catch (e) {
         if (alive && current === sequence)
           setState({ key, problem: (e as Error).message });

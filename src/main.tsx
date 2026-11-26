@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { ArrowLeft, ArrowRight, Check, Inbox, LockKeyhole } from "lucide-react";
 import {
   Answer,
+  Referral,
   matchCards,
   Pack,
   packs,
@@ -24,6 +25,7 @@ type Draft = {
   ids: string[];
   answers: Answer[];
   room?: string;
+  referral?: Referral;
 };
 const route = currentRoute;
 const initial = initialPath();
@@ -165,13 +167,13 @@ function App() {
     setSelected(p);
     go("/?step=setup&pack=" + p.id);
   };
-  function begin(ids: string[]) {
+  function begin(ids: string[], roundPack: Pack = pack, referral?: Referral) {
     const key = crypto.getRandomValues(new Uint32Array(2)).join("-");
     sessionStorage.setItem(
       "draft." + key,
-      JSON.stringify({ packId: pack.id, ids, answers: [] }),
+      JSON.stringify({ packId: roundPack.id, ids, answers: [], referral }),
     );
-    go("/?step=answer&pack=" + pack.id + "&d=" + key);
+    go("/?step=answer&pack=" + roundPack.id + "&d=" + key);
   }
   function update(d: Draft) {
     sessionStorage.setItem(draftKey, JSON.stringify(d));
@@ -184,7 +186,13 @@ function App() {
       return;
     }
     // 보내기는 무료다. 결제는 결과 화면에서 잠금을 열 때만 일어난다.
-    const id = await createRoom(pack, draft.ids, draft.answers, draftKey);
+    const id = await createRoom(
+      pack,
+      draft.ids,
+      draft.answers,
+      draftKey,
+      draft.referral,
+    );
     update({ ...draft, room: id });
     go("/r/" + id, true);
   }
@@ -202,7 +210,10 @@ function App() {
         guest={url.searchParams.get("j")}
         step={step}
         go={go}
-        start={start}
+        replay={(p, ids, referral) => {
+          setSelected(p);
+          begin(ids, p, referral);
+        }}
         toast={setToast}
       />
     );

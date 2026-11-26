@@ -1,4 +1,13 @@
-import { Answer, Pack, packs, Result } from "./domain";
+import {
+  Answer,
+  Pack,
+  packs,
+  Result,
+  Product,
+  Referral,
+  passPackId,
+  validateFive,
+} from "./domain";
 import * as mock from "./mockStore";
 
 const endpoint = import.meta.env.VITE_SUPABASE_URL?.replace(/\/$/, "");
@@ -14,7 +23,25 @@ function get<T>(key: string, fallback: T): T {
 function put(key: string, value: unknown) {
   localStorage.setItem(prefix + key, JSON.stringify(value));
 }
+function deviceKey(): string {
+  let key = get<string | null>("pass-device", null);
+  if (!key) {
+    key = mock.token();
+    put("pass-device", key);
+  }
+  return key;
+}
+export function hasPass(pack: Pack) {
+  return shared
+    ? pack.id === passPackId && get("trial-pass." + pack.id, false)
+    : mock.hasPass(pack);
+}
 const messages: Record<string, string> = {
+  PASS_ALREADY_OWNED:
+    "이 기기에 이미 팩 이용권이 있어요. 이 방만 열 수 있어요.",
+  NO_LOCKED_MATCHES: "더 열 수 있는 카드가 없어요.",
+  ALREADY_UNLOCKED: "이미 이 방의 결과가 열렸어요.",
+  INVALID_ACTION: "공유 방 서버에 최신 마이그레이션을 적용해주세요.",
   INVALID_LINK: "초대 링크를 확인해주세요. 보낸 사람에게 다시 받아볼래요?",
   EXPIRED: "이 카드는 만료됐어요. 새 카드를 만들까요?",
   INVALID_NICK: "닉네임은 편안한 말로, 글자나 숫자 2~6자로 적어주세요.",
@@ -63,6 +90,7 @@ export async function createRoom(
   ids: string[],
   answers: Answer[],
   attempt: string,
+  referral?: Referral,
 ) {
   if (!shared) return mock.createRoom(p, ids, answers);
   const key = prefix + "attempt." + attempt;
@@ -71,7 +99,17 @@ export async function createRoom(
   for (let attempt = 0; attempt < 3; attempt++) {
     sessionStorage.setItem(key, JSON.stringify(c));
     try {
-      await rpc("create", { ...c, ids, answers, pack: p.id });
+      await rpc("create", {
+        ...c,
+        ids,
+        answers,
+        pack: p.id,
+        device: deviceKey(),
+        ...(referral && {
+          parent_id: referral.room,
+          parent_guest: referral.guest,
+        }),
+      });
       break;
     } catch (e) {
       if ((e as { code?: string }).code !== "ID_COLLISION" || attempt === 2)
@@ -131,7 +169,11 @@ export async function viewRoom(
   id: string,
   guest: string | null,
 ): Promise<RoomData> {
-  if (!shared) return mock.viewRoom(id, guest);
+  if (!shared) {
+    const data = mock.viewRoom(id, guest);
+    mock.activateSeat(id, guest);
+    return data;
+  }
   const host = get<Entry | null>("host." + id, null);
   const token = guest ?? host?.host;
   if (!token) throw new Error(messages.INVALID_LINK);
@@ -160,14 +202,35 @@ export async function viewRoom(
     result,
   };
 }
+export async function redeal(id: string, guest: string | null, pack: Pack) {
+  if (!shared) return mock.redeal(id, guest);
+  const token = guest ?? get<Entry | null>("host." + id, null)?.host;
+  const ids = await rpc<string[]>("redeal", { id, token });
+  if (!validateFive(pack, ids))
+    throw new Error("새 카드를 준비하지 못했어요. 다시 시도해주세요.");
+  return ids;
+}
 /**
  * 결과 잠금 해제. 화면의 모의 결제가 끝난 뒤에만 부른다.
  * 실제 출시에서는 영수증 검증으로 바꿔야 하는 지점이다.
  */
-export async function unlockRoom(id: string, guest: string | null) {
-  if (!shared) return mock.unlock(id, guest);
+export async function unlockRoom(
+  id: string,
+  guest: string | null,
+  product: Product = "room",
+) {
+  if (!shared) return mock.unlock(id, guest, product);
   const token = guest ?? get<Entry | null>("host." + id, null)?.host;
-  await rpc("test_unlock", { id, token });
+  if (product === "pack") {
+    try {
+      await rpc("test_pack_pass", { id, token, device: deviceKey() });
+    } catch (e) {
+      if ((e as { code?: string }).code === "PASS_ALREADY_OWNED")
+        put("trial-pass." + passPackId, true);
+      throw e;
+    }
+    put("trial-pass." + passPackId, true);
+  } else await rpc("test_unlock", { id, token });
 }
 export async function setNickname(id: string, nick: string) {
   if (!shared) return mock.setNickname(id, nick);
