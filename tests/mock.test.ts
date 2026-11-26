@@ -86,7 +86,7 @@ it("보상형 광고는 방마다 한 번, 겹친 카드 한 장을 더 열고 �
     guest = viewRoom(id, null).guestToken;
   await submitGuest(id, guest, ["yes", "maybe", "yes", "yes", "no"]);
   expect(viewRoom(id, null).ad).toBe("available");
-  // 광고를 끝까지 보지 않았으면 보상을 기록하지 않는다.
+  // 광고를 보기 전에는 한 장만 열려 있다.
   expect(viewRoom(id, null).result?.locked).toBe(2);
   await claimAd(id, guest);
   const after = viewRoom(id, null);
