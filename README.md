@@ -32,11 +32,11 @@ npm run preview
 
 `build`는 TypeScript 검사와 Vite CSR 빌드를 실행한 뒤 SDK 3.10.0의 `ait build`로 프로젝트 루트에 `secret-five.ait`를 만듭니다. `dist/`를 웹에 올릴 때는 `/r/*`, `/demo`, `/library` 같은 진입 경로를 `index.html`로 연결합니다.
 
-`npm test`는 60문항 구조, 팩 내 5장 선택, 최근 3판 회피, 9가지 답 조합, 잠금 해제 전 두 장/후 전부 공개, 광고로 한 장 더 열기, 무료 팩의 두 장 무료·나머지 결제, 통한 카드 수별 호감 확률과 다음 행동, 방 만료, 재제출, 사용자 문구를 검사합니다. 공유 방 테스트는 PGlite의 PostgreSQL에서 실제 마이그레이션(001~004)을 실행하고 익명 API 역할로 접근 권한과 응답 범위를 검사합니다.
+`npm test`는 60문항 구조, 팩 내 5장 선택, 최근 3판 회피, 9가지 답 조합, 잠금 해제 전 두 장/후 전부 공개, 광고로 한 장 더 열기, 무료 팩의 두 장 무료·나머지 결제, 통한 카드 수별 호감 확률과 다음 행동, 방 만료, 재제출, 사용자 문구를 검사합니다. 공유 방 테스트는 PGlite의 PostgreSQL에서 실제 마이그레이션(001~005)을 실행하고 익명 API 역할로 접근 권한과 응답 범위를 검사합니다. 서버의 무료 미리보기·광고 카드 수는 `src/domain.ts`의 `previewCards`·`adBonusCards`와 같은지, `state` 응답에 상대의 원본 응답이나 어긋난 카드 id가 섞이지 않는지도 함께 확인합니다.
 
 ## 두 기기의 공유 방
 
-1. Supabase 프로젝트의 SQL Editor에서 [방 마이그레이션](supabase/migrations/001_rooms.sql), [결과 잠금 해제 마이그레이션](supabase/migrations/002_result_unlock.sql), [팩 이용권과 집계 마이그레이션](supabase/migrations/003_pack_pass_metrics.sql), [보상형 광고 마이그레이션](supabase/migrations/004_rewarded_ad.sql)을 순서대로 한 번씩 실행합니다. 이미 002까지 적용한 DB에는 003과 004만 추가합니다. 응답 테이블은 비공개 스키마에 두고, 클라이언트는 좌석 토큰을 검사하는 RPC만 호출합니다.
+1. Supabase 프로젝트의 SQL Editor에서 [방 마이그레이션](supabase/migrations/001_rooms.sql), [결과 잠금 해제 마이그레이션](supabase/migrations/002_result_unlock.sql), [팩 이용권과 집계 마이그레이션](supabase/migrations/003_pack_pass_metrics.sql), [보상형 광고 마이그레이션](supabase/migrations/004_rewarded_ad.sql), [5.0 결제 규칙 마이그레이션](supabase/migrations/005_preview_two_and_pass.sql)을 순서대로 한 번씩 실행합니다. 이미 004까지 적용한 DB에는 005만 추가하면 됩니다(005는 001~004를 지우지 않고 함수만 다시 정의합니다). 응답 테이블은 비공개 스키마에 두고, 클라이언트는 좌석 토큰을 검사하는 RPC만 호출합니다.
 2. 프로젝트 루트에 `.env.local`을 만들고 다음 값을 설정한 뒤 개발 서버를 재시작하거나 다시 빌드합니다. 공개 키를 사용합니다.
 
 ```dotenv
@@ -94,9 +94,33 @@ group by pack;
 - 앱인토스 콘솔에서 앱 이름이 `secret-five`인지 확인하고 테스트 번들을 올립니다. 콘솔의 연령 등급과 빌드 대상도 함께 확인합니다.
 - 토스 iOS·Android에서 상하단 Safe Area, OS 뒤로가기, 카드 스와이프와 햅틱, 큰 글자와 동작 줄이기를 확인합니다. SDK 인셋 초기 조회와 구독을 사용하며 브라우저에서는 CSS safe-area로 대체합니다.
 - 두 실제 기기에서 공유 방을 사용해 카카오톡 초대, 미니앱 복귀, 두 번째 제출 직후 양쪽 결과 갱신을 확인합니다.
-- 모의 잠금 해제를 취소하거나 완료한 뒤 새로 고쳐 봅니다. 무료 팩은 결제 없이 결과가 전부 열리고, 유료 팩은 잠금 해제 전후로 열린 카드 수가 달라지는지 확인합니다.
+- 모의 잠금 해제를 취소하거나 완료한 뒤 새로 고쳐 봅니다. 모든 팩에서 둘 다 YES인 카드는 두 장까지 열리고, 세 장 이상 통했을 때만 결제 버튼이 나오며 결제 전후로 열린 카드 수가 달라지는지 확인합니다(무료 팩도 같습니다).
 - 공유 방에서 광고 버튼을 눌러 1장이 더 열리는지, 새로 고쳐도 버튼이 돌아오지 않는지, 반대 좌석에도 같은 카드가 보이는지 확인합니다.
 
-## 공유 방 서버의 결제 규칙 (남은 작업)
+## 공유 방 서버의 결제 규칙 (005 적용 완료)
 
-지금 `supabase/migrations/001~004`의 서버 함수는 이전 규칙을 따릅니다(무료 팩 전부 공개, 미리보기 한 장, pack2 전용 3,300원 이용권). 브라우저 Mock 미리보기와 앱 빌드는 5.0 규칙(두 장 무료, 단건 결제, 1,900원 전 팩 패스)으로 동작하므로, 실서버(`VITE_SUPABASE_URL`)를 붙여 출시하려면 005 마이그레이션에서 `state`의 미리보기 수, `test_unlock`의 무료 팩 허용, `test_pack_pass`의 전 팩·1,900원 규칙을 맞춰야 합니다.
+`supabase/migrations/005_preview_two_and_pass.sql`이 서버를 5.0 규칙에 맞춥니다. 앱 코드는 그대로이고, 실서버(`VITE_SUPABASE_URL`)를 붙이려면 이 파일을 프로젝트에 한 번 실행하면 됩니다.
+
+- `state`: 둘 다 YES인 카드는 **두 장까지**만 `opened`로 내려갑니다(무료 팩 포함). 세 장 이상이면 나머지는 `matched - 2`장이 잠긴 채 남고, 결제나 광고로 엽니다.
+- `test_unlock`(이 방 열기): 무료 팩도 허용하고, 금액은 **1,100원**(썸 끝내기 1,496원)입니다. 잠글 카드가 없으면(겹친 카드 두 장 이하) `NO_LOCKED_MATCHES`로 막습니다.
+- `test_pack_pass`(전 팩 자유이용 패스): pack2 전용·3,300원 규칙을 없애고 **어느 팩 방에서든 1,900원**으로 기록합니다. 패스는 `secret_five_private.all_passes`에 기기 단위로 남고, 이후 그 기기가 만드는 네 팩 방은 만들 때부터 열립니다. 패스를 이미 가진 기기가 다른 방을 열어도 주문은 다시 기록하지 않습니다.
+- 003에서 판 **pack2 전용 3,300원 이용권**(`pack2_passes`)은 이미 산 기기에 한해 pack2에서만 계속 인정합니다.
+- `secret_five_ad`: 광고로 여는 카드를 무료 두 장 다음(겹친 카드의 세 번째)으로 옮겼습니다. 무료 팩도 세 장 이상 통하면 광고로 한 장이 열립니다.
+
+**같이 점검한 것**
+
+- `state` 응답은 `pack`·`nick`·`created`·`ids`(결과 전에만)·`matched`·`unlocked`·`opened` 일곱 개 키뿐입니다. 상대의 원본 답(`host_answers`·`guest_answers`)과 어긋난 카드 id, 카드별 잠금 사유는 어떤 경우에도 내려가지 않으며, `opened`는 둘 다 YES인 카드만 담습니다. 겹친 개수(`matched`)는 결과 화면이 쓰는 값이라 내려갑니다.
+- 방 코드는 8자 `[a-z0-9]`(36⁸ ≈ 2.8조, 약 41비트)로 추측으로 겹칠 일이 없고, 실제 잠금은 좌석 토큰(32바이트 · 43자)입니다. 코드만 알면 `state`도 결제도 `INVALID_LINK`로 거절됩니다.
+
+**원격 DB 적용 전에 확인할 점**
+
+- 저장소에는 `supabase/config.toml`이나 Supabase CLI 연결이 없고 `.env.local`(gitignore)에 프로젝트 URL·공개 키만 있습니다. 그래서 자동 `supabase db push`는 불가능하고, 대시보드 SQL Editor에서 005 파일 내용을 붙여 실행하거나 `supabase link` 후 `supabase db push`를 쓰면 됩니다.
+- 005는 다시 실행해도 안전합니다(`create table if not exists` + `create or replace function`). 이 파일 하나로 `secret_five`와 `secret_five_ad` 두 함수가 함께 바뀌므로, 적용 직후 앱을 다시 열어 결과 화면의 열린 카드 수를 확인하세요.
+- 모의 결제(`test_purchases`)는 제 DB에서 꺼야 합니다. 켜져 있으면 누구나 `test_unlock`·`test_pack_pass`를 무료로 부를 수 있습니다.
+
+적용 후 아래 질의로 005가 들어갔는지 확인할 수 있습니다(둘 다 `true`여야 합니다).
+
+```sql
+select to_regclass('secret_five_private.all_passes') is not null as has_all_passes,
+       pg_get_functiondef('public.secret_five(text,jsonb)'::regprocedure) like '%matches[1:2]%' as preview_two;
+```

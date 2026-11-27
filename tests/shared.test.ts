@@ -1,6 +1,7 @@
 import { beforeAll, beforeEach, afterAll, it, expect } from "vitest";
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
+import { adBonusCards, previewCards } from "../src/domain";
 
 const db = new PGlite();
 beforeAll(async () => {
@@ -25,6 +26,9 @@ beforeAll(async () => {
     readFileSync("supabase/migrations/003_pack_pass_metrics.sql", "utf8"),
   );
   await db.exec(readFileSync("supabase/migrations/004_rewarded_ad.sql", "utf8"));
+  await db.exec(
+    readFileSync("supabase/migrations/005_preview_two_and_pass.sql", "utf8"),
+  );
   await db.exec("set role anon");
 }, 20000);
 afterAll(() => db.close());
@@ -67,12 +71,24 @@ it("두 좌석의 응답을 봉인하고 권한 없는 조회 및 원본 응답 
   });
   await call("answer", { ...seat, answers: Array(5).fill("no") });
   const preview = await call("state", seat);
-  // 무료 팩은 처음부터 겹친 카드가 모두 열린다.
-  expect(preview.opened).toEqual(create.ids.slice(0, 3));
+  // 5.0: 무료 팩도 둘 다 YES인 카드 두 장까지만 열린다.
+  expect(preview.opened).toEqual(create.ids.slice(0, 2));
   expect(preview.matched).toBe(3);
-  expect(preview.unlocked).toBe(true);
+  expect(preview.unlocked).toBe(false);
   expect(preview.ids).toBeNull();
-  expect(JSON.stringify(preview)).not.toMatch(/p1-04|p1-05|answers|HHHH|GGGG/);
+  // 응답에는 겹친 카드와 개수만 있고 상대의 원본 응답은 없다.
+  expect(Object.keys(preview).sort()).toEqual([
+    "created",
+    "ids",
+    "matched",
+    "nick",
+    "opened",
+    "pack",
+    "unlocked",
+  ]);
+  expect(JSON.stringify(preview)).not.toMatch(
+    /p1-04|p1-05|answers|maybe|"no"|"yes"|HHHH|GGGG/,
+  );
 });
 it("유료 팩 방도 이용권 없이 만들고, 모의 잠금 해제는 테스트 설정에서만 열린다", async () => {
   const paid = {
@@ -91,7 +107,7 @@ it("유료 팩 방도 이용권 없이 만들고, 모의 잠금 해제는 테스
   await expect(call("test_unlock", seat)).rejects.toThrow(/TEST_PURCHASE/);
   expect(
     (await call("state", { id: paid.id, token: paid.host })).opened,
-  ).toEqual(paid.ids.slice(0, 1));
+  ).toEqual(paid.ids.slice(0, 2));
   await db.exec(
     "reset role; update secret_five_private.settings set test_purchases=true; set role anon;",
   );
@@ -101,6 +117,8 @@ it("유료 팩 방도 이용권 없이 만들고, 모의 잠금 해제는 테스
   const matched = paid.ids.filter((_, i) => create.answers[i] === "yes");
   expect(full.opened).toEqual(matched);
   expect((await call("state", seat)).opened).toEqual(matched);
+  // 결제 후에도 상대의 원본 응답과 어긋난 카드는 내려가지 않는다.
+  expect(JSON.stringify(full)).not.toMatch(/answers|maybe|"no"|"yes"/);
 });
 
 const yes = Array(5).fill("yes");
@@ -142,8 +160,56 @@ beforeEach(async () => {
   await admin("update secret_five_private.settings set test_purchases=false");
 });
 
+it("서버의 무료 미리보기와 광고 카드 수가 앱 설정과 같다", async () => {
+  // 앱(domain.ts)은 두 장 무료 + 광고 한 장으로 화면을 그린다. 서버도 같아야 한다.
+  expect(previewCards).toBe(2);
+  expect(adBonusCards).toBe(1);
+  const r = room("sync0001");
+  await complete(r);
+  const matched = r.ids.filter((_, i) => r.answers[i] === "yes");
+  const view = await call("state", credentials(r));
+  expect(view.matched).toBe(matched.length);
+  expect(view.opened).toEqual(matched.slice(0, previewCards));
+  expect(await callAd("ad_reward", credentials(r))).toEqual({
+    bonus: true,
+    card: matched[previewCards],
+  });
+});
+
+it("방 코드는 8자 소문자·숫자이고 코드만으로는 방을 열 수 없다", async () => {
+  const r = room("code0001");
+  await call("create", r);
+  for (const bad of ["code001", "code00001", "CODE0001", "code-001", ""])
+    await expect(call("state", { id: bad, token: r.guest })).rejects.toThrow(
+      /INVALID_ID/,
+    );
+  // 없는 코드와 남의 좌석 토큰은 같은 오류로 돌려준다.
+  await expect(
+    call("state", { id: "code0002", token: r.guest }),
+  ).rejects.toThrow(/INVALID_LINK/);
+  await expect(call("state", { id: r.id, token: token("Y") })).rejects.toThrow(
+    /INVALID_LINK/,
+  );
+});
+
+it("state는 겹친 카드와 개수만 내보내고 어긋난 카드는 감춘다", async () => {
+  const one = room("hidden01");
+  await complete(one, {}, ["yes", "no", "no", "no", "no"]);
+  const view = await call("state", credentials(one));
+  expect(view.matched).toBe(1);
+  expect(view.opened).toEqual([one.ids[0]]);
+  // 호스트가 YES를 골라도 상대가 NO·MAYBE였던 카드는 id조차 내려가지 않는다.
+  expect(JSON.stringify(view)).not.toMatch(/p2-0[2-5]/);
+  const none = room("hidden02");
+  await complete(none, {}, ["no", "maybe", "no", "yes", "no"]);
+  const empty = await call("state", credentials(none));
+  expect(empty.matched).toBe(0);
+  expect(empty.opened).toEqual([]);
+  expect(empty.ids).toBeNull();
+});
+
 it.each(["host", "guest"] as const)(
-  "grants the %s buyer one pack2 pass and counts one purchase",
+  "전 팩 패스를 산 %s 좌석의 기기는 이 방과 이후 네 팩 방을 모두 연다",
   async (seat) => {
     const r = room(seat === "host" ? "buyhost1" : "buyguest");
     const device = token(seat === "host" ? "A" : "B");
@@ -155,6 +221,7 @@ it.each(["host", "guest"] as const)(
     );
     await enablePurchases();
     expect(await call("test_pack_pass", buyer)).toBe(true);
+    // 같은 좌석·기기의 재시도는 영수증으로 통과하고 다시 과금하지 않는다.
     expect(await call("test_pack_pass", buyer)).toBe(true);
     const other = credentials(r, seat === "host" ? "guest" : "host");
     expect((await call("state", other)).opened).toEqual(
@@ -169,11 +236,12 @@ it.each(["host", "guest"] as const)(
     expect(await call("test_unlock", other)).toBe(true);
     const suffix = seat[0];
     for (const [i, pack, supplied, unlocked] of [
-      [0, 2, device, true],
-      [1, 2, otherDevice, false],
-      [2, 2, undefined, false],
-      [3, 3, device, false],
-      [4, 4, device, false],
+      [0, 1, device, true],
+      [1, 2, device, true],
+      [2, 3, device, true],
+      [3, 4, device, true],
+      [4, 2, otherDevice, false],
+      [5, 3, undefined, false],
     ] as const) {
       const child = room(`next${suffix}00${i}`, pack);
       await call("create", { ...child, device: supplied });
@@ -187,7 +255,7 @@ it.each(["host", "guest"] as const)(
         room_purchases: 0,
         room_krw: 0,
         pack_purchases: 1,
-        pack_krw: 3300,
+        pack_krw: 1900,
       },
     ]);
   },
@@ -216,7 +284,8 @@ it("validates the operation, seat, device, completion and paid matches before gr
   await expect(
     call("test_unlock", { ...buyer, product: "pack" }),
   ).rejects.toThrow(/INVALID_PRODUCT/);
-  for (const n of [0, 1]) {
+  // 잠글 카드가 없으면(두 장 이하) 결제도 없다. 무료 팩도 같다.
+  for (const n of [0, 1, 2]) {
     const few = room(`matches${n}`);
     await complete(
       few,
@@ -230,14 +299,18 @@ it("validates the operation, seat, device, completion and paid matches before gr
   }
   const free = room("free0001", 1);
   await complete(free);
-  await expect(call("test_unlock", credentials(free))).rejects.toThrow(
-    /NO_LOCKED_MATCHES/,
-  );
+  expect(await call("test_unlock", credentials(free))).toBe(true);
+  expect(await metrics()).toContainEqual({
+    pack: "pack1",
+    completed_rooms: 1,
+    replay_completed_rooms: 0,
+    room_purchases: 1,
+    room_krw: 1100,
+    pack_purchases: 0,
+    pack_krw: 0,
+  });
   const premium = room("premium4", 4);
   await complete(premium);
-  await expect(
-    call("test_pack_pass", { ...credentials(premium), device }),
-  ).rejects.toThrow(/INVALID_PRODUCT/);
   expect(
     await call("test_unlock", { ...credentials(premium), product: "room" }),
   ).toBe(true);
@@ -250,6 +323,21 @@ it("validates the operation, seat, device, completion and paid matches before gr
     room_krw: 1496,
     pack_purchases: 0,
     pack_krw: 0,
+  });
+  // 전 팩 패스는 어느 팩 방에서 사도 1,900원으로 집계된다.
+  const pass4 = room("pass0004", 4);
+  await complete(pass4);
+  expect(await call("test_pack_pass", { ...credentials(pass4), device })).toBe(
+    true,
+  );
+  expect(await metrics()).toContainEqual({
+    pack: "pack4",
+    completed_rooms: 2,
+    replay_completed_rooms: 0,
+    room_purchases: 1,
+    room_krw: 1496,
+    pack_purchases: 1,
+    pack_krw: 1900,
   });
 });
 
@@ -283,7 +371,7 @@ it("preserves the first unlock and never trades a room unlock for a pass", async
   ]);
 });
 
-it("prevents duplicate grants for one device in independently created rooms", async () => {
+it("한 기기의 전 팩 패스는 여러 방을 열지만 주문은 한 번만 기록한다", async () => {
   const first = room("device01"),
     second = room("device02");
   const device = token("F");
@@ -294,13 +382,20 @@ it("prevents duplicate grants for one device in independently created rooms", as
     call("test_pack_pass", { ...credentials(r), device }),
   );
   const outcomes = await Promise.allSettled(attempts);
-  expect(outcomes.filter((o) => o.status === "fulfilled")).toHaveLength(1);
-  const loser = outcomes[0].status === "rejected" ? first : second;
-  await call("create", { ...loser, device }); // An old create retry cannot upgrade a room.
-  expect((await call("state", credentials(loser))).unlocked).toBe(false);
+  expect(outcomes.filter((o) => o.status === "fulfilled")).toHaveLength(2);
+  // 패스를 이미 가진 기기는 새 주문 없이 그 방만 연다.
+  expect((await call("state", credentials(first))).unlocked).toBe(true);
+  expect((await call("state", credentials(second))).unlocked).toBe(true);
   expect(await metrics()).toMatchObject([
-    { completed_rooms: 2, pack_purchases: 1, pack_krw: 3300 },
+    { completed_rooms: 2, pack_purchases: 1, pack_krw: 1900 },
   ]);
+  // 다른 기기는 같은 방을 열 수 없다.
+  const third = room("device03");
+  await complete(third);
+  await call("test_unlock", credentials(third));
+  await expect(
+    call("test_pack_pass", { ...credentials(third), device: token("Q") }),
+  ).rejects.toThrow(/ALREADY_UNLOCKED/);
 });
 
 it("attributes only completed, same-pack guest referrals and keeps anonymous totals after expiry", async () => {
@@ -376,7 +471,7 @@ it("keeps pre-migration room unlocks without issuing a pass or recounting histor
   expect(await metrics()).toEqual([]);
 });
 
-it("광고 보상은 방마다 한 번만, 겹친 두 번째 카드 하나를 내보낸다", async () => {
+it("광고 보상은 방마다 한 번만, 무료 두 장 다음 겹친 카드 하나를 내보낸다", async () => {
   const r = room("reward01");
   await complete(r);
   const seat = credentials(r);
@@ -389,15 +484,15 @@ it("광고 보상은 방마다 한 번만, 겹친 두 번째 카드 하나를 �
   expect(matched).toHaveLength(4);
   expect(await callAd("ad_reward", seat)).toEqual({
     bonus: true,
-    card: matched[1],
+    card: matched[2],
   });
   // 두 번째 시청은 카드를 더 주지 않고, 반대 좌석도 같은 한 장을 본다.
   expect(await callAd("ad_reward", credentials(r, "host"))).toEqual({
     bonus: true,
-    card: matched[1],
+    card: matched[2],
   });
   expect((await call("state", credentials(r, "host"))).opened).toEqual(
-    matched.slice(0, 1),
+    matched.slice(0, 2),
   );
   // 결제로 방을 다 열면 광고 카드는 따로 내보내지 않는다.
   await enablePurchases();
@@ -405,20 +500,33 @@ it("광고 보상은 방마다 한 번만, 겹친 두 번째 카드 하나를 �
   expect(await callAd("ad_state", seat)).toEqual({ bonus: true, card: null });
 });
 
-it("광고 보상은 결과와 겹친 카드, 유료 방 조건을 확인한다", async () => {
+it("광고 보상은 결과와 잠긴 카드 조건을 확인한다", async () => {
   const early = room("reward02");
   await call("create", early);
   await expect(callAd("ad_reward", credentials(early))).rejects.toThrow(
     /NO_RESULT/,
   );
-  const few = room("reward03");
-  await complete(few, {}, ["yes", "no", "no", "no", "no"]);
-  await expect(callAd("ad_reward", credentials(few))).rejects.toThrow(
-    /NO_LOCKED_MATCHES/,
-  );
-  const free = room("reward04", 1);
+  // 겹친 카드가 두 장이면 잠글 카드가 없어 광고도 결제도 없다. 무료 팩도 같다.
+  for (const [id, pack] of [
+    ["reward03", 2],
+    ["reward04", 1],
+  ] as const) {
+    const few = room(id, pack);
+    await complete(few, {}, ["yes", "yes", "no", "no", "no"]);
+    await expect(callAd("ad_reward", credentials(few))).rejects.toThrow(
+      /NO_LOCKED_MATCHES/,
+    );
+    expect(await callAd("ad_state", credentials(few))).toEqual({
+      bonus: false,
+      card: null,
+    });
+  }
+  // 무료 팩도 세 장 이상이면 광고로 한 장이 열린다.
+  const free = room("reward05", 1);
   await complete(free);
-  await expect(callAd("ad_reward", credentials(free))).rejects.toThrow(
-    /NO_LOCKED_MATCHES/,
-  );
+  const matched = free.ids.filter((_, i) => free.answers[i] === "yes");
+  expect(await callAd("ad_reward", credentials(free))).toEqual({
+    bonus: true,
+    card: matched[2],
+  });
 });
