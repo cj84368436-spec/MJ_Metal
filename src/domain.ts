@@ -62,7 +62,7 @@ export const isFree = (p: Pack) => p.price_krw === 0;
  */
 export const packNote = (p: Pack, ownsPass = false) =>
   ownsPass
-    ? freePreviewText + " · 패스로 결과까지 열려요"
+    ? "보내기 무료 · 패스로 4개 팩 결과까지 열려요"
     : freePreviewText + " · 나머지 " + roomPrice(p);
 /**
  * 결제창이 실제로 부를 상품. 버튼에서 고른 상품을 그대로 따르되, 패스를 가진

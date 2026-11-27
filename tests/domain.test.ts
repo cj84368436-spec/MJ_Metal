@@ -14,7 +14,6 @@ import {
   packAfter,
   packNote,
   checkoutProduct,
-  freePreviewText,
   Answer,
 } from "../src/domain";
 
@@ -178,8 +177,10 @@ describe("결제창 상품 선택", () => {
     );
     expect(packNote(packs[0])).toContain("나머지 1,100원");
     expect(packNote(packs[1], true)).toBe(
-      freePreviewText + " · 패스로 결과까지 열려요",
+      "보내기 무료 · 패스로 4개 팩 결과까지 열려요",
     );
+    // 어느 팩 안내든 문장에 쉼표를 쓰지 않는다(금액의 자리 구분은 제외).
+    for (const p of packs) expect(packNote(p)).not.toMatch(/[가-힣],/);
   });
 });
 describe("결과 심리 분석", () => {
