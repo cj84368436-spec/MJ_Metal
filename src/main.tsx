@@ -1,24 +1,32 @@
 import { useCallback, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { ArrowLeft, ArrowRight, Check, Inbox, LockKeyhole } from "lucide-react";
+import {
+  ChevronLeft,
+  ArrowRight,
+  Check,
+  Inbox,
+  House,
+  Layers2,
+} from "lucide-react";
 import {
   Answer,
   Referral,
   matchCards,
   Pack,
-  packs,
   selectFive,
   validateFive,
 } from "./domain";
 import { createRoom, myRooms } from "./store";
 import { buzz, initialPath, installBridge, leave, native } from "./bridge";
-import { browserPath, currentRoute } from "./paths";
-import { available, Home } from "./Home";
+import { asset, browserPath, currentRoute } from "./paths";
+import { available, Home, Cover } from "./Home";
 import { Setup } from "./Setup";
 import { CardStack } from "./CardStack";
 import { Room } from "./Room";
 import { Results } from "./Results";
 import "./style.css";
+
+declare const __HAS_HOME_COVER__: boolean;
 
 type Draft = {
   packId: string;
@@ -70,28 +78,33 @@ function Demo({ pack, start }: { pack: Pack; start: () => void }) {
 function Library({ go }: { go: (u: string) => void }) {
   const rooms = myRooms();
   return (
-    <section className="flow">
-      <span className="eyebrow">최근 7일</span>
-      <h1>내 카드함</h1>
-      <p>내가 보낸 카드예요. 상대가 답하면 결과가 열려요.</p>
+    <section className="flow library">
+      <h1 className="screen-title">내 카드함</h1>
+      <h2 className="library-period">최근 7일 · 보낸 카드</h2>
       {rooms.length ? (
-        rooms.map((r, i) => (
+        rooms.map((r) => (
           <button
             className="library-row"
             key={r.id}
             onClick={() => go("/r/" + r.id)}
           >
-            <span className="lib-mark">
-              {String(available.indexOf(r.pack) + 1 || i + 1).padStart(2, "0")}
-            </span>
+            <img className="lib-heart" src={asset("sketch/heart.png")} alt="" />
             <span className="lib-copy">
               <b>{r.pack.title}</b>
               <small>
-                {r.id} · {new Date(r.created).toLocaleDateString("ko-KR")}
+                {new Date(r.created).toLocaleString("ko-KR", {
+                  month: "numeric",
+                  day: "numeric",
+                  weekday: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false,
+                })}
               </small>
             </span>
-            <em>{r.done ? "결과 보기" : "기다리는 중"}</em>
-            <ArrowRight size={16} />
+            <em className={r.done ? "ready" : ""}>
+              {r.done ? "결과 보기 ›" : "기다리는 중"}
+            </em>
           </button>
         ))
       ) : (
@@ -201,6 +214,8 @@ function App() {
   const roomId =
     /^\/r\/([a-z0-9]{8})$/.exec(url.pathname)?.[1] ??
     (url.pathname === "/" ? url.searchParams.get("room") : null);
+  const cover = home && __HAS_HOME_COVER__;
+  const theme = (home && !cover) || (step === "theme" && url.pathname === "/");
   let page;
   if (roomId)
     page = (
@@ -220,7 +235,8 @@ function App() {
   else if (isLibrary) page = <Library go={go} />;
   else if (url.pathname === "/demo")
     page = <Demo pack={pack} start={() => start(pack)} />;
-  else if (home)
+  else if (cover) page = <Cover start={() => go("/?step=theme")} />;
+  else if (theme)
     page = (
       <Home
         selected={selected}
@@ -280,44 +296,16 @@ function App() {
     );
   return (
     <div
+      className="app-shell"
       onClickCapture={(e) => {
         const button = (e.target as HTMLElement).closest("button");
         if (button && !button.disabled && !button.dataset.feedback) buzz();
       }}
     >
-      <header>
-        <div className="topbar">
-          <button
-            className="brand"
-            aria-label="썸 속마음 질문 홈"
-            onClick={() => go("/")}
-          >
-            <span className="brand-symbol">
-              <LockKeyhole size={15} />
-            </span>
-            썸 속마음 질문
-          </button>
-          <nav aria-label="주 메뉴">
-            <button
-              className={!isLibrary ? "current" : ""}
-              onClick={() => go("/")}
-            >
-              카드 홈
-            </button>
-            <button
-              className={isLibrary ? "current" : ""}
-              onClick={() => go("/library")}
-            >
-              내 카드함
-            </button>
-          </nav>
-        </div>
-      </header>
-      <main>
+      <main className={cover ? "app-main cover-main" : "app-main"}>
         {!home && !native && (
-          <button className="back text-btn" onClick={back}>
-            <ArrowLeft size={16} />
-            뒤로
+          <button className="back" aria-label="뒤로" onClick={back}>
+            <ChevronLeft size={25} strokeWidth={2.7} />
           </button>
         )}
         {page}
@@ -327,6 +315,22 @@ function App() {
           </p>
         )}
       </main>
+      {(home || theme || isLibrary) && (
+        <nav className="tabbar" aria-label="주 메뉴">
+          <button
+            aria-current={home || theme ? "page" : undefined}
+            onClick={() => go("/")}
+          >
+            <House size={24} />홈
+          </button>
+          <button
+            aria-current={isLibrary ? "page" : undefined}
+            onClick={() => go("/library")}
+          >
+            <Layers2 size={24} />내 카드함
+          </button>
+        </nav>
+      )}
       {toast && (
         <div className="toast" role="status">
           <Check size={16} />

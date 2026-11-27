@@ -1,18 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowLeftRight,
   ArrowRight,
-  Check,
-  Copy,
+  ChevronRight,
+  Clock3,
   Link as LinkIcon,
-  Send,
 } from "lucide-react";
 import { Answer, Pack, Referral } from "./domain";
-import { setNickname, submitGuest, unlockRoom, shared, redeal, claimAdBonus } from "./store";
+import {
+  setNickname,
+  submitGuest,
+  unlockRoom,
+  shared,
+  redeal,
+  claimAdBonus,
+} from "./store";
 import { buzz, shareText, inviteURL } from "./bridge";
 import { CardStack } from "./CardStack";
 import { useRoom } from "./useRoom";
-import { CardFan } from "./Home";
+import { asset } from "./paths";
 import { Results } from "./Results";
 import { Purchase } from "./Setup";
 
@@ -29,6 +35,13 @@ export function Room({ id, guest, step, go, replay, toast }: Props) {
   const [busy, setBusy] = useState(false);
   const [edit, setEdit] = useState(false);
   const [fallback, setFallback] = useState(false);
+  const shareDetails = useRef<HTMLDetailsElement>(null);
+  const linkInput = useRef<HTMLInputElement>(null);
+  function revealLink() {
+    setFallback(true);
+    if (shareDetails.current) shareDetails.current.open = true;
+    linkInput.current?.focus();
+  }
   const [nick, setNick] = useState("");
   const [replayBusy, setReplayBusy] = useState(false);
   const [purchase, setPurchase] = useState(false);
@@ -259,16 +272,24 @@ export function Room({ id, guest, step, go, replay, toast }: Props) {
             }}
           />
         ) : (
-          <section className="flow received">
-            <CardFan questions={data.questions} small />
-            <span className="eyebrow">받은 카드 · {pack.title}</span>
-            <h1>
-              {data.nick ? data.nick + "님이" : "누군가"} 카드 5장을 보냈어요
-            </h1>
-            <p>다섯 장에 답하면, 둘 다 좋다고 한 카드만 열려요.</p>
-            <div className="notice small">
-              네가 뭘 골랐는지, 상대는 알 수 없어요. 서로 다른 카드는 아무것도
-              알려주지 않아요.
+          <section className="room-sketch room-received">
+            <h1 className="screen-title">받은 카드</h1>
+            <img
+              className="room-envelope"
+              src={asset("sketch/envelope.png")}
+              alt=""
+            />
+            <div className="paper-sheet room-letter">
+              <span>{pack.title}</span>
+              <h2>
+                {data.nick ? data.nick + "님이" : "누군가"} 카드 5장을 보냈어요
+              </h2>
+              <p>다섯 장에 답하면, 둘 다 좋다고 한 카드만 열려요.</p>
+              <blockquote>{data.questions[2]?.question}</blockquote>
+              <small>
+                네가 뭘 골랐는지, 상대는 알 수 없어요. 서로 다른 카드는 아무것도
+                알려주지 않아요.
+              </small>
             </div>
             <button className="cta" onClick={() => go(next("answer"))}>
               나도 답할래
@@ -280,42 +301,80 @@ export function Room({ id, guest, step, go, replay, toast }: Props) {
           </section>
         )
       ) : (
-        <section className="flow share-screen">
-          <div className="share-head">
-            <span className="complete">
-              <Check size={20} />
-            </span>
-            <h1>카드 5장이 준비됐어요</h1>
-            <p>링크를 보내면 시작돼요. 보내기 전까지는 아무도 못 봐요.</p>
+        <section className="room-sketch room-share">
+          <h1 className="screen-title">공유하기</h1>
+          <img
+            className="room-envelope"
+            src={asset("sketch/envelope.png")}
+            alt=""
+          />
+          <h2 className="room-ready">
+            <span className="highlighter">카드 5장이 준비됐어요!</span>
+          </h2>
+          <div className="room-share-actions">
+            <button
+              className="choice-row room-share-action"
+              disabled={!href}
+              onClick={async () => {
+                try {
+                  if (
+                    await shareText(
+                      "대놓고 못 물어본 것 5개. 둘 다 좋으면 열려.\n" + href,
+                    )
+                  )
+                    toast("공유 시트를 열었어요");
+                  else revealLink();
+                } catch (e) {
+                  if ((e as Error).name !== "AbortError") revealLink();
+                }
+              }}
+            >
+              <img src={asset("sketch/talk.png")} alt="" />
+              카톡으로 보내기
+              <ChevronRight className="row-chevron" aria-hidden="true" />
+            </button>
+            <button
+              className="choice-row room-share-action"
+              disabled={!href}
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(href);
+                  toast("링크를 복사했어요");
+                } catch {
+                  revealLink();
+                }
+              }}
+            >
+              <LinkIcon className="room-link-icon" aria-hidden="true" />
+              링크 복사
+              <ChevronRight className="row-chevron" aria-hidden="true" />
+            </button>
           </div>
-          <div className="invite-card">
-            <span className="eyebrow">
-              <LinkIcon size={15} />
-              {pack.title} · 5장
-            </span>
-            <div className="invite-row">
-              <strong>{id}</strong>
-              <button
-                className="text-btn"
-                disabled={!href}
-                onClick={async () => {
-                  try {
-                    await navigator.clipboard.writeText(href);
-                    toast("링크를 복사했어요");
-                  } catch {
-                    setFallback(true);
-                  }
-                }}
-              >
-                <Copy size={16} />
-                링크 복사
-              </button>
-            </div>
+          <div className="room-wait">
+            <h3>
+              <Clock3 aria-hidden="true" />
+              상대 답변을 기다리는 중이에요
+            </h3>
+            <p>상대가 답변하면 결과를 바로 확인할 수 있어요.</p>
+          </div>
+          <details className="room-share-details" ref={shareDetails}>
+            <summary>초대 링크 및 설정</summary>
+            <p>
+              {pack.title} · 5장 · {id}
+            </p>
+            <p>링크를 보내면 시작돼요. 보내기 전까지는 아무도 못 봐요.</p>
             <label className="link-input">
               {shared ? "초대 링크" : "모의 초대 링크"}
-              <input value={href} readOnly onFocus={(e) => e.target.select()} />
+              <input
+                ref={linkInput}
+                value={href}
+                readOnly
+                onFocus={(e) => e.target.select()}
+              />
             </label>
-            {fallback && <small>위 링크를 선택해 직접 복사해주세요.</small>}
+            {fallback && (
+              <small role="status">위 링크를 선택해 직접 복사해주세요.</small>
+            )}
             <button
               className="text-btn"
               onClick={() => {
@@ -349,35 +408,16 @@ export function Room({ id, guest, step, go, replay, toast }: Props) {
                 <button className="text-btn">저장</button>
               </form>
             )}
-          </div>
-          <button
-            className="cta"
-            disabled={!href}
-            onClick={async () => {
-              try {
-                if (
-                  await shareText(
-                    "대놓고 못 물어본 것 5개. 둘 다 좋으면 열려.\n" + href,
-                  )
-                )
-                  toast("공유 시트를 열었어요");
-                else setFallback(true);
-              } catch (e) {
-                if ((e as Error).name !== "AbortError") setFallback(true);
-              }
-            }}
-          >
-            <Send size={17} />
-            카톡으로 보내기
-          </button>
-          <button className="text-btn" onClick={() => go("/library")}>
-            나중에 보내기
-          </button>
-          <small className="center-note">
-            {data.unlocked
-              ? "이 방은 둘 다 좋다고 한 카드가 전부 열려요."
-              : "보내기는 무료예요. 결과는 첫 카드까지 무료로 열려요."}
-          </small>
+            <button className="text-btn" onClick={() => go("/library")}>
+              나중에 보내기
+            </button>
+            <small>
+              {data.unlocked
+                ? "이 방은 둘 다 좋다고 한 카드가 전부 열려요."
+                : "보내기는 무료예요. 결과는 첫 카드까지 무료로 열려요."}
+            </small>
+            {switcher}
+          </details>
         </section>
       )}
       {error && (
@@ -385,7 +425,7 @@ export function Room({ id, guest, step, go, replay, toast }: Props) {
           {error}
         </p>
       )}
-      {switcher}
+      {guest && switcher}
     </>
   );
 }

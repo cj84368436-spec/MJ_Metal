@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { ArrowRight, Download, LockKeyhole, Play } from "lucide-react";
 import { AdState, Pack, price, Result } from "./domain";
 import { buzz, reduced, showRewardedAd, adsAvailable, AdPhase } from "./bridge";
+import { asset } from "./paths";
+import "./room-sketch.css";
 
 function usePercent(target: number) {
   const [n, setN] = useState<number | null>(() => (reduced() ? target : null));
@@ -140,39 +142,79 @@ export function Results({
     }
   }
   return (
-    <section className="flow result">
-      <header className="result-head">
-        <span className="eyebrow">
-          {pack.title}
-          {demo && " · 예시"}
-        </span>
-        {result.matched ? (
-          <>
-            <h1>
-              5장 중 <em>{result.matched}장</em>이 통했어요
-            </h1>
-            <p className="result-sub">
-              겹친 비율 {n === null ? "…" : n + "%"}
-              {full ? " · 카드마다 한마디까지 열렸어요" : ""}
-            </p>
-          </>
-        ) : (
-          <>
-            <h1>이번엔 겹친 카드가 없어요</h1>
-            <p className="result-sub">
-              서로 뭘 골랐는지는 알 수 없어요. 그것도 비밀이에요.
-            </p>
-          </>
-        )}
-      </header>
-
-      {result.opened.map((q, i) => (
-        <article
-          className="open-card"
-          key={q.id}
-          style={{ animationDelay: 140 + i * 90 + "ms" }}
+    <section className="room-sketch room-result">
+      <h1 className="screen-title">{demo ? "예시 결과 보기" : "결과 보기"}</h1>
+      <img
+        className="room-result-pair"
+        src={asset("sketch/couple-result.png")}
+        alt=""
+      />
+      <div className="paper-sheet room-result-summary">
+        <h2>
+          {result.matched ? (
+            <>
+              5장 중 <em>{result.matched}장</em>이 통했어요!
+            </>
+          ) : (
+            "이번엔 겹친 카드가 없어요"
+          )}
+        </h2>
+        <p>겹친 비율</p>
+        <div className="room-ratio">
+          <i className="room-rays" aria-hidden="true" />
+          <strong className="room-percent" aria-label={result.percent + "%"}>
+            {n === null ? "…" : n + "%"}
+          </strong>
+          <i className="room-rays" aria-hidden="true" />
+        </div>
+        <div
+          className="room-result-count"
+          role="img"
+          aria-label={`전체 5장 중 겹친 카드 ${result.matched}장, 겹치지 않은 카드 ${result.sealed}장`}
         >
-          <span className="tag">
+          {Array.from({ length: 5 }, (_, i) => (
+            <img
+              key={i}
+              src={
+                i < result.matched
+                  ? asset("sketch/card-hit.png")
+                  : asset("sketch/card-miss.png")
+              }
+              alt=""
+            />
+          ))}
+        </div>
+      </div>
+      {!demo && pack.id !== "pack4" && (
+        <button
+          className="cta room-save"
+          onClick={async () => {
+            try {
+              await exportImage(result);
+            } catch (e) {
+              if ((e as Error).name !== "AbortError")
+                setError("이미지를 저장할 수 없어요. 다시 시도해주세요.");
+            }
+          }}
+        >
+          <Download size={21} />
+          결과 이미지 저장
+        </button>
+      )}
+      {error && <p role="alert">{error}</p>}
+
+      <div className="room-result-context">
+        <strong>{pack.title}</strong>
+        {!result.matched ? (
+          <p>서로 뭘 골랐는지는 알 수 없어요. 그것도 비밀이에요.</p>
+        ) : (
+          full && <p>카드마다 한마디까지 열렸어요.</p>
+        )}
+      </div>
+      {result.opened.map((q) => (
+        <article className="paper-sheet room-open-card" key={q.id}>
+          <span className="room-card-label">
+            <img src={asset("sketch/heart.png")} alt="" />
             {q.id === result.adBonusId ? "광고로 연 카드" : "함께 열린 카드"}
           </span>
           <h2>{q.question}</h2>
@@ -187,15 +229,9 @@ export function Results({
       ))}
 
       {result.locked > 0 && (
-        <section className="paywall">
-          <div className="backs" aria-hidden="true">
-            {Array.from({ length: Math.min(result.locked, 3) }, (_, i) => (
-              <i key={i}>
-                <LockKeyhole size={17} />
-              </i>
-            ))}
-          </div>
-          <h3>나머지 {result.locked}장도 통했어요</h3>
+        <section className="paper-sheet room-paywall">
+          <LockKeyhole className="room-lock" aria-hidden="true" />
+          <h2>나머지 {result.locked}장도 통했어요</h2>
           <p>
             둘 다 좋다고 한 카드예요. 카드마다 이어질 한마디까지 한 번에 열려요.
           </p>
@@ -208,7 +244,11 @@ export function Results({
               </button>
               {canAd && (
                 <>
-                  <button className="ghost ad" disabled={watching} onClick={watchAd}>
+                  <button
+                    className="choice-row room-reward"
+                    disabled={watching}
+                    onClick={watchAd}
+                  >
                     {!watching && <Play size={15} />}
                     {phase === "loading"
                       ? "광고 준비 중…"
@@ -217,8 +257,8 @@ export function Results({
                         : "광고 보고 1장 무료로 더 열기"}
                   </button>
                   <small className="ad-note">
-                    광고 한 편을 끝까지 보면 이 방에서 한 번, 겹친 카드 1장이 바로
-                    열려요.
+                    광고 한 편을 끝까지 보면 이 방에서 한 번, 겹친 카드 1장이
+                    바로 열려요.
                   </small>
                   {adError && (
                     <small className="ad-note ad-error" role="alert">
@@ -228,7 +268,9 @@ export function Results({
                 </>
               )}
               {ad === "used" && (
-                <small className="ad-note">광고로 이 방의 카드 1장을 열었어요.</small>
+                <small className="ad-note">
+                  광고로 이 방의 카드 1장을 열었어요.
+                </small>
               )}
             </>
           )}
@@ -263,29 +305,12 @@ export function Results({
             <small className="center-note">
               방금 답한 다섯 장은 빼고 골라요.
             </small>
-            {pack.id !== "pack4" && (
-              <button
-                className="text-btn"
-                onClick={async () => {
-                  try {
-                    await exportImage(result);
-                  } catch (e) {
-                    if ((e as Error).name !== "AbortError")
-                      setError("이미지를 저장할 수 없어요. 다시 시도해주세요.");
-                  }
-                }}
-              >
-                <Download size={16} />
-                결과 이미지 저장
-              </button>
-            )}
             <button className="text-btn" onClick={home}>
               다른 팩 보기
             </button>
           </>
         )}
       </div>
-      {error && <p role="alert">{error}</p>}
     </section>
   );
 }

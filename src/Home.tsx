@@ -1,31 +1,19 @@
-import { useState } from "react";
-import { hasPass } from "./store";
 import { ArrowRight, Check } from "lucide-react";
-import { Pack, packs, price, isFree, Question } from "./domain";
+import { hasPass } from "./store";
+import { Pack, packs, price, isFree } from "./domain";
+import { asset } from "./paths";
 
 export const available = packs.filter(
   (p) => p.id !== "pack4" || import.meta.env.VITE_AUDIENCE !== "teens",
 );
 
-/** AI 일러스트 대신 쓰는 타이포그래피 카드 더미. */
-export function CardFan({
-  questions,
-  small,
-}: {
-  questions: Question[];
-  small?: boolean;
-}) {
-  return (
-    <div className={"fan" + (small ? " small" : "")} aria-hidden="true">
-      {questions.slice(0, 3).map((q, i) => (
-        <article className={"fan-card c" + (i + 1)} key={q.id}>
-          <span className="fan-no">0{i + 1}</span>
-          <p>{q.question}</p>
-        </article>
-      ))}
-    </div>
-  );
-}
+const themeArt = ["heart", "theme-chat", "theme-sparks", "theme-heart"];
+const captions = [
+  "지금 우리, 썸일까?",
+  "내 마음이 궁금해?",
+  "혹시 나만 신경 쓰여?",
+  "이 감정, 들키고 싶어?",
+];
 
 export function Home({
   selected,
@@ -33,96 +21,86 @@ export function Home({
   start,
 }: {
   selected: Pack;
-  onSelect: (p: Pack) => void;
+  onSelect: (pack: Pack) => void;
   start: () => void;
 }) {
-  const [coverReady, setCoverReady] = useState(false);
   return (
-    <div className="home">
-      {/* Original user-approved cover: no redraw, crop, filter or color changes. */}
-      <div style={{ display: coverReady ? "block" : "none", position: "relative", margin: "0 auto", width: "100%", maxWidth: 480 }}>
-        <img
-          src={import.meta.env.BASE_URL + "secret-five-cover.jpg"}
-          alt="우리 썸인가? 비밀 다섯 장. 우연히 눈이 마주친 두 사람."
-          onLoad={() => setCoverReady(true)}
-          onError={() => setCoverReady(false)}
-          style={{ display: "block", width: "100%", height: "auto" }}
-        />
-        <button
-          type="button"
-          aria-label="시작하기 — 카드 테마 선택"
-          onClick={() => document.getElementById("card-picker")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" })}
-          style={{ position: "absolute", left: "8.5%", right: "11%", top: "81.5%", height: "10%", borderRadius: 999, background: "transparent", color: "transparent" }}
-        >
-          시작하기
-        </button>
-      </div>
-      {!coverReady && <section className="hero">
-        <div className="hero-copy">
-          <span className="kicker">못 물어본 말, 다섯 장</span>
-          <h1>
-            대놓고 못 물어본
-            <br />
-            설레는 5장
-          </h1>
-          <p className="lede">
-            보내면 상대도 몰래 답해요.
-            <br />둘 다 좋다고 한 카드만 열려요.
-          </p>
-        </div>
-        <CardFan questions={selected.questions} />
-      </section>}
-
-      <section className="picker" id="card-picker">
-        <div className="picker-head">
-          <h2>오늘의 카드</h2>
-          <small>보내기는 모두 무료</small>
-        </div>
-        <div className="pack-list" role="radiogroup" aria-label="카드 팩">
-          {available.map((p, i) => (
+    <section className="theme-screen">
+      <h1 className="screen-title">
+        <span className="title-rays">카드 테마 선택</span>
+      </h1>
+      <div className="pack-list" role="radiogroup" aria-label="카드 테마">
+        {available.map((p, i) => {
+          const checked = p.id === selected.id;
+          return (
             <button
               key={p.id}
+              className={"pack-row" + (checked ? " on" : "")}
               role="radio"
-              aria-checked={p === selected}
-              className={"pack-row" + (p === selected ? " on" : "")}
+              aria-checked={checked}
               onClick={() => onSelect(p)}
             >
-              <span className="pack-no">{String(i + 1).padStart(2, "0")}</span>
+              <img
+                className="theme-art"
+                src={asset("sketch/" + themeArt[i] + ".png")}
+                alt=""
+              />
               <span className="pack-name">
-                <b>{p.title}</b>
-                <small>{p.subtitle}</small>
+                <b>
+                  {p.title}
+                  {i === 0 ? "?" : i >= 2 ? "…" : ""}
+                </b>
+                <small>{captions[i]}</small>
               </span>
-              <span className="pack-cost">
-                {isFree(p)
-                  ? "전부 무료"
-                  : hasPass(p)
-                    ? "이용권 보유"
-                    : "결과 " + price(p)}
-                {p === selected && <Check size={15} />}
+              {checked && (
+                <span className="pack-tag">
+                  {isFree(p)
+                    ? "전부 무료"
+                    : hasPass(p)
+                      ? "이용권 보유"
+                      : "결과 " + price(p)}
+                </span>
+              )}
+              <span className="radio-dot" aria-hidden="true">
+                {checked && <Check size={15} strokeWidth={3} />}
               </span>
             </button>
-          ))}
-        </div>
+          );
+        })}
+      </div>
+      <div className="theme-bottom">
+        <p className="theme-note">
+          <img src={asset("sketch/crown.png")} alt="" />
+          {isFree(selected) ? (
+            <>
+              결과 확인 · 보내기 모두 <b>무료!</b>
+            </>
+          ) : hasPass(selected) ? (
+            "이용권으로 결과까지 열려요"
+          ) : (
+            <>보내기는 무료 · 추가 결과 {price(selected)}</>
+          )}
+        </p>
         <button className="cta" onClick={start}>
-          5장 고르기 시작
-          <ArrowRight size={18} />
+          이 테마로 시작하기 <ArrowRight size={21} />
         </button>
-        <p className="foot">
-          {selected.title} ·{" "}
-          {isFree(selected)
-            ? "30초 · 가입 없이 · 결과 전부 무료"
-            : hasPass(selected)
-              ? "이용권으로 겹친 카드 전부 열기"
-              : "30초 · 가입 없이 · 결과는 첫 카드까지 무료"}
-        </p>
-      </section>
+      </div>
+    </section>
+  );
+}
 
-      <section className="quiet">
-        <p>링크 하나 보내면 끝. 상대가 답하는 순간 결과가 떠요.</p>
-        <p className="quiet-note">
-          서로 다른 카드는 아무것도 알려주지 않아요. 선택도, 답도.
-        </p>
-      </section>
-    </div>
+export function Cover({ start }: { start: () => void }) {
+  return (
+    <section className="cover" aria-label="썸 속마음 질문">
+      <img
+        src={asset("secret-five-cover.jpg")}
+        alt="썸 속마음 질문 확정 홈 표지"
+      />
+      <button
+        className="cover-start"
+        aria-label="시작하기 — 카드 테마 선택"
+        onClick={start}
+      />
+    </section>
   );
 }

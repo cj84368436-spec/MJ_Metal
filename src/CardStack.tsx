@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Check, RotateCcw } from "lucide-react";
 import { Answer, Pack, Question } from "./domain";
+import { asset } from "./paths";
 import { buzz, reduced } from "./bridge";
 
 const feedback = {
@@ -73,39 +74,25 @@ export function CardStack({
         : null;
   return (
     <section className="flow stack-flow">
-      <div className="section-title">
-        <span className="eyebrow">
-          {guest ? "받은 카드" : "내 답 5장"} · {pack.title}
-        </span>
-        {!!answers.length && (
-          <button
-            className="text-btn"
-            disabled={!!chosen || busy}
-            data-feedback="custom"
-            onClick={() => {
-              buzz("tap");
-              change(answers.slice(0, -1));
-            }}
-          >
-            <RotateCcw size={16} />
-            되돌리기
-          </button>
-        )}
-      </div>
-      <div className="progress">
+      <div
+        className="progress"
+        aria-label={Math.min(5, answers.length + 1) + "번째 카드"}
+      >
         <strong>{Math.min(5, answers.length + 1)} / 5</strong>
-        <span>
-          <i
-            style={{
-              transform:
-                "scaleX(" + Math.min(1, (answers.length + 1) / 5) + ")",
-            }}
-          />
-        </span>
+        <div className="progress-pips" aria-hidden="true">
+          {questions.map((item, i) => (
+            <i key={item.id} className={i <= answers.length ? "filled" : ""} />
+          ))}
+        </div>
       </div>
       {q ? (
         <>
-          <div className="stack">
+          <div className="paper-sheet answer-sheet">
+            <img
+              className="sheet-heart"
+              src={asset("sketch/question-heart.png")}
+              alt=""
+            />
             <article
               key={q.id}
               className={"question panel " + (chosen ? "leaving" : "")}
@@ -171,9 +158,6 @@ export function CardStack({
                 setDrag({ x: 0, y: 0 });
               }}
             >
-              <span className="card-mark">
-                {pack.id.replace("pack", "0")} · {pack.title}
-              </span>
               <h1>{q.question}</h1>
               {Math.max(Math.abs(drag.x), Math.abs(drag.y)) > 57 && (
                 <b className="drag-label">
@@ -184,21 +168,21 @@ export function CardStack({
                 </b>
               )}
             </article>
-          </div>
-          <div className="actions">
-            {q.options.map((o) => (
-              <button
-                key={o.value}
-                disabled={!!chosen}
-                data-feedback="custom"
-                className={
-                  "answer " + o.value + (chosen === o.value ? " picked" : "")
-                }
-                onClick={() => pick(o.value)}
-              >
-                {o.label}
-              </button>
-            ))}
+            <div className="actions">
+              {q.options.map((o) => (
+                <button
+                  key={o.value}
+                  disabled={!!chosen}
+                  data-feedback="custom"
+                  className={
+                    "answer " + o.value + (chosen === o.value ? " picked" : "")
+                  }
+                  onClick={() => pick(o.value)}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
           </div>
           <small className="center hint">
             끌어서 답해도 돼요 · 오른쪽 {q.options[0].label} / 위{" "}
@@ -224,6 +208,25 @@ export function CardStack({
           </button>
         </div>
       )}
+      <div className="answer-meta">
+        <small>
+          {guest ? "받은 카드" : "내 답"} · {pack.title}
+        </small>
+        {!!answers.length && (
+          <button
+            className="text-btn"
+            disabled={!!chosen || busy}
+            data-feedback="custom"
+            onClick={() => {
+              buzz("tap");
+              change(answers.slice(0, -1));
+            }}
+          >
+            <RotateCcw size={16} />
+            되돌리기
+          </button>
+        )}
+      </div>
     </section>
   );
 }

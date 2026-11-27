@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, Check, Hand, Shuffle, X } from "lucide-react";
+import { ArrowRight, Check, ChevronRight, X } from "lucide-react";
 import {
   Pack,
   price,
@@ -9,6 +9,7 @@ import {
   passPackId,
 } from "./domain";
 import { recent, hasPass } from "./store";
+import { asset } from "./paths";
 import { buzz, reduced } from "./bridge";
 
 export function Setup({
@@ -21,42 +22,64 @@ export function Setup({
   const [manual, setManual] = useState(false);
   const [ids, setIds] = useState<string[]>([]);
   return (
-    <section className="flow">
-      <span className="eyebrow">{pack.title}</span>
-      <h1>{manual ? "직접 다섯 장을 골라요" : "오늘의 다섯 장"}</h1>
-      <p>
-        {manual
-          ? ids.length + " / 5장 골랐어요"
-          : "15장 중에서 오늘 묻고 싶은 다섯 장만 골라요."}
-      </p>
-      <small className="muted-note">
-        {pack.price_krw
-          ? hasPass(pack)
-            ? "이용권으로 이 방의 겹친 카드가 전부 열려요."
-            : "보내기는 무료예요. 결과는 첫 카드까지 무료로 보여드려요."
-          : "보내기도 결과도 전부 무료예요."}
-      </small>
-      {pack.id === "pack4" && (
-        <p className="notice small">
-          늦은 밤, 단둘일 때 꺼내기 어려운 질문만 담았어요.
-        </p>
-      )}
+    <section className="flow setup">
+      <h1 className="screen-title">
+        <span className="title-rays">카드 고르기</span>
+      </h1>
       {!manual ? (
-        <div className="actions">
-          <button
-            className="cta"
-            onClick={() => start(selectFive(pack, recent(pack)))}
-          >
-            <Shuffle size={18} />
-            랜덤으로 5장 뽑기
-          </button>
-          <button className="ghost" onClick={() => setManual(true)}>
-            <Hand size={17} />
-            직접 고르기
-          </button>
-        </div>
+        <>
+          <img
+            className="couple-setup"
+            src={asset("sketch/couple-setup.png")}
+            alt=""
+          />
+          <div className="paper-sheet setup-paper">
+            <h2>
+              <span className="highlighter">오늘의 다섯 장</span>
+            </h2>
+            <p>
+              총 {pack.questions.length}장 중에서
+              <br />
+              오늘 묻고 싶은 다섯 장만 골라요!
+            </p>
+            <div className="setup-choices">
+              <button
+                className="choice-row"
+                onClick={() => start(selectFive(pack, recent(pack)))}
+              >
+                <img src={asset("sketch/dice.png")} alt="" />
+                랜덤으로 5장 뽑기
+                <ChevronRight className="row-chevron" />
+              </button>
+              <button className="choice-row" onClick={() => setManual(true)}>
+                <img src={asset("sketch/cards.png")} alt="" />
+                <span>
+                  직접 고르기 <small>({pack.questions.length}장 보기)</small>
+                </span>
+                <ChevronRight className="row-chevron" />
+              </button>
+            </div>
+          </div>
+          <small className="setup-meta">
+            {pack.title} ·{" "}
+            {pack.price_krw
+              ? hasPass(pack)
+                ? "이용권으로 결과까지 열려요"
+                : "보내기는 무료예요"
+              : "결과까지 무료예요"}
+          </small>
+          {pack.id === "pack4" && (
+            <p className="notice small">
+              늦은 밤, 단둘일 때 꺼내기 어려운 질문만 담았어요.
+            </p>
+          )}
+        </>
       ) : (
         <>
+          <div className="manual-head">
+            <h2>직접 다섯 장을 골라요</h2>
+            <b>{ids.length} / 5</b>
+          </div>
           <div className="manual">
             {pack.questions.map((q) => {
               const on = ids.includes(q.id);
