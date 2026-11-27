@@ -371,6 +371,28 @@ it("preserves the first unlock and never trades a room unlock for a pass", async
   ]);
 });
 
+it("003의 pack2 전용 이용권은 그 기기의 pack2 방에서만 계속 인정한다", async () => {
+  const device = token("P");
+  await db.exec("reset role");
+  try {
+    await db.query(
+      "insert into secret_five_private.pack2_passes(device_hash) values (sha256(convert_to($1,'UTF8')))",
+      [device],
+    );
+  } finally {
+    await db.exec("set role anon");
+  }
+  for (const [id, pack, unlocked] of [
+    ["oldpass2", 2, true],
+    ["oldpass3", 3, false],
+    ["oldpass1", 1, false],
+  ] as const) {
+    const r = room(id, pack);
+    await call("create", { ...r, device });
+    expect((await call("state", credentials(r))).unlocked).toBe(unlocked);
+  }
+});
+
 it("한 기기의 전 팩 패스는 여러 방을 열지만 주문은 한 번만 기록한다", async () => {
   const first = room("device01"),
     second = room("device02");
