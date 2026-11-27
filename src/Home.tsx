@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { hasPass } from "./store";
 import { ArrowRight, Check } from "lucide-react";
 import { Pack, packs, price, isFree, Question } from "./domain";
@@ -35,9 +36,28 @@ export function Home({
   onSelect: (p: Pack) => void;
   start: () => void;
 }) {
+  const [coverReady, setCoverReady] = useState(false);
   return (
     <div className="home">
-      <section className="hero">
+      {/* Original user-approved cover: no redraw, crop, filter or color changes. */}
+      <div style={{ display: coverReady ? "block" : "none", position: "relative", margin: "0 auto", width: "100%", maxWidth: 480 }}>
+        <img
+          src={import.meta.env.BASE_URL + "secret-five-cover.jpg"}
+          alt="우리 썸인가? 비밀 다섯 장. 우연히 눈이 마주친 두 사람."
+          onLoad={() => setCoverReady(true)}
+          onError={() => setCoverReady(false)}
+          style={{ display: "block", width: "100%", height: "auto" }}
+        />
+        <button
+          type="button"
+          aria-label="시작하기 — 카드 테마 선택"
+          onClick={() => document.getElementById("card-picker")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" })}
+          style={{ position: "absolute", left: "8.5%", right: "11%", top: "81.5%", height: "10%", borderRadius: 999, background: "transparent", color: "transparent" }}
+        >
+          시작하기
+        </button>
+      </div>
+      {!coverReady && <section className="hero">
         <div className="hero-copy">
           <span className="kicker">못 물어본 말, 다섯 장</span>
           <h1>
@@ -51,9 +71,9 @@ export function Home({
           </p>
         </div>
         <CardFan questions={selected.questions} />
-      </section>
+      </section>}
 
-      <section className="picker">
+      <section className="picker" id="card-picker">
         <div className="picker-head">
           <h2>오늘의 카드</h2>
           <small>보내기는 모두 무료</small>
