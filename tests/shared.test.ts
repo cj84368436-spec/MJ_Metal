@@ -320,7 +320,7 @@ it("validates the operation, seat, device, completion and paid matches before gr
     completed_rooms: 1,
     replay_completed_rooms: 0,
     room_purchases: 1,
-    room_krw: 1496,
+    room_krw: 1500,
     pack_purchases: 0,
     pack_krw: 0,
   });
@@ -335,7 +335,7 @@ it("validates the operation, seat, device, completion and paid matches before gr
     completed_rooms: 2,
     replay_completed_rooms: 0,
     room_purchases: 1,
-    room_krw: 1496,
+    room_krw: 1500,
     pack_purchases: 1,
     pack_krw: 1900,
   });

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { packs } from "../src/domain";
+import { readFileSync } from "node:fs";
+import { freePreviewText, packs } from "../src/domain";
 
 const all = packs.flatMap((p) => p.questions);
 const shown = (q: (typeof all)[number]) =>
@@ -67,5 +68,34 @@ describe("카드 문구 정책", () => {
       );
     const last = packs.find((p) => p.id === "pack4")!;
     expect(last.title + " " + last.subtitle).not.toMatch(/19|성인|야한/);
+  });
+});
+describe("화면 가격 안내와 팩 소개", () => {
+  it("팩 부제와 앱 설명에도 쉼표를 쓰지 않는다", () => {
+    for (const p of packs) expect(p.subtitle).not.toContain(",");
+    const meta = JSON.parse(readFileSync("src/questions.json", "utf8")) as {
+      description: string;
+    };
+    expect(meta.description).not.toContain(",");
+  });
+  it("팩4 가격을 바꿀 때 옛 금액이 코드와 서버 규칙에 남지 않는다", () => {
+    const files = [
+      "src/questions.json",
+      "src/domain.ts",
+      "src/Home.tsx",
+      "src/Setup.tsx",
+      "src/Results.tsx",
+      "supabase/migrations/005_preview_two_and_pass.sql",
+    ];
+    for (const file of files)
+      expect(readFileSync(file, "utf8"), file).not.toMatch(/1,496|1496/);
+  });
+  it("팩2~4도 두 장까지 무료라는 사실을 홈에서 숨기지 않는다", () => {
+    // 모든 팩이 2장 무료이므로 "결과는 결제"처럼 다른 규칙을 알리는 문구를 쓰지 않는다.
+    for (const file of ["src/Home.tsx", "src/Setup.tsx"])
+      expect(readFileSync(file, "utf8"), file).not.toContain("결과는 결제");
+    // 홈·카드 고르기 화면 모두 같은 무료 공개 문구를 쓴다.
+    expect(freePreviewText).toBe("보내기 무료 · 둘 다 맞은 2장까지 무료");
+    expect(readFileSync("src/Home.tsx", "utf8")).toContain("freeTail");
   });
 });

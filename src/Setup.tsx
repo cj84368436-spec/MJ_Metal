@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Check, ChevronRight, X } from "lucide-react";
 import {
   Pack,
-  isFree,
+  checkoutProduct,
+  packNote,
   roomPrice,
   selectFive,
   Product,
@@ -63,12 +64,7 @@ export function Setup({
             </div>
           </div>
           <small className="setup-meta">
-            {pack.title} ·{" "}
-            {hasPass()
-              ? "패스로 결과까지 열려요"
-              : isFree(pack)
-                ? "보내기 무료 · 둘 다 맞은 2장까지 무료"
-                : "보내기 무료 · 결과 " + roomPrice(pack)}
+            {pack.title} · {packNote(pack, hasPass())}
           </small>
           {pack.id === "pack4" && (
             <p className="notice small">
@@ -143,8 +139,11 @@ export function Purchase({
   confirm: (product: Product) => Promise<void>;
 }) {
   const [selection, setProduct] = useState<Product>(initial);
-  const eligible = !hasPass();
-  const product = eligible ? selection : "room";
+  // 패스를 가진 기기는 이미 네 팩 결과를 열 수 있어서 단건 결제 대상이 아니다.
+  // 버튼에서 고른 상품을 그대로 따르되, 패스 보유자는 패스 적용으로 고정한다.
+  const ownsPass = hasPass();
+  const product = checkoutProduct(selection, ownsPass);
+  const passOnly = product === "pack";
   const ref = useRef<HTMLDialogElement>(null),
     timer = useRef(0),
     closing = useRef(false),
@@ -172,20 +171,24 @@ export function Purchase({
     if (state !== "ready") return;
     setState("paying");
     setError("");
-    timer.current = window.setTimeout(async () => {
-      granting.current = true;
-      try {
-        await confirm(product);
-        buzz("success");
-      } catch (e) {
-        granting.current = false;
-        setError(
-          (e as Error).message || "결과를 열 수 없어요. 다시 시도해주세요.",
-        );
-        setState("ready");
-        buzz("error");
-      }
-    }, 1800);
+    timer.current = window.setTimeout(
+      async () => {
+        granting.current = true;
+        try {
+          await confirm(product);
+          buzz("success");
+        } catch (e) {
+          granting.current = false;
+          setError(
+            (e as Error).message || "결과를 열 수 없어요. 다시 시도해주세요.",
+          );
+          setState("ready");
+          buzz("error");
+        }
+      },
+      // 보유한 패스를 적용할 때는 기다릴 결제가 없다.
+      ownsPass ? (reduced() ? 0 : 320) : 1800,
+    );
   }
   return (
     <dialog
@@ -199,7 +202,7 @@ export function Purchase({
     >
       <div className="handle" />
       <div className="sheet-head">
-        <span className="eyebrow">모의 결제</span>
+        <span className="eyebrow">{ownsPass ? "보유한 패스" : "모의 결제"}</span>
         <button
           aria-label="닫기"
           className="icon-btn"
@@ -209,9 +212,19 @@ export function Purchase({
           <X />
         </button>
       </div>
-      <h1 id="purchase-title">통한 카드 {remaining}장 더 열기</h1>
-      <p>둘 다 좋다고 한 카드와 이어질 한마디를 두 사람 모두 볼 수 있어요.</p>
-      {eligible ? (
+      <h1 id="purchase-title">
+        {passOnly
+          ? passName + "로 열기"
+          : "통한 카드 " + remaining + "장 더 열기"}
+      </h1>
+      <p>
+        {passOnly
+          ? "이 방도 같이 열리고 이 기기에서 만드는 네 팩 결과도 모두 열려요."
+          : "둘 다 좋다고 한 카드와 이어질 한마디를 두 사람 모두 볼 수 있어요."}
+      </p>
+      {ownsPass ? (
+        <p className="sheet-price">이미 보유한 패스 · 추가 결제 없음</p>
+      ) : (
         <fieldset className="offers" disabled={state !== "ready"}>
           <legend>이용 범위 선택</legend>
           {(["room", "pack"] as const).map((value) => (
@@ -240,8 +253,6 @@ export function Purchase({
             </label>
           ))}
         </fieldset>
-      ) : (
-        <p className="sheet-price">이번 방 · {roomPrice(pack)}</p>
       )}
       <p className="notice small">
         서로 다른 카드는 끝까지 비밀로 남아요. 상대의 답도 보이지 않아요.
@@ -251,9 +262,17 @@ export function Purchase({
           ? "여는 중…"
           : error
             ? "다시 시도"
-            : (product === "room" ? roomPrice(pack) : passPrice) + "으로 열기"}
+            : passOnly
+              ? ownsPass
+                ? "보유한 패스로 열기"
+                : passPrice + "으로 열기"
+              : roomPrice(pack) + "으로 열기"}
       </button>
-      <small className="sheet-note">모의 결제 · 실제 청구 금액 0원</small>
+      <small className="sheet-note">
+        {ownsPass
+          ? "보유한 패스가 적용돼요 · 실제 청구 금액 0원"
+          : "모의 결제 · 실제 청구 금액 0원"}
+      </small>
       {error && <p role="alert">{error}</p>}
     </dialog>
   );

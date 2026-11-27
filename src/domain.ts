@@ -44,6 +44,10 @@ export const passPriceKrw = 1900;
 export const passPrice = passPriceKrw.toLocaleString("ko-KR") + "원";
 /** 무료 팩에서 남은 '통한 카드'를 열 때의 값. */
 export const extraCardKrw = 1100;
+/** 모든 팩이 함께 쓰는 무료 공개 안내. 두 조각을 나눠 화면에서 굵게 표시한다. */
+export const freeLead = "보내기 무료 · 둘 다 맞은";
+export const freeTail = "2장까지 무료";
+export const freePreviewText = freeLead + " " + freeTail;
 export type Referral = { room: string; guest: string };
 export const lockedText = "둘 다 좋다고 한 카드예요.";
 export const krw = (n: number) => n.toLocaleString("ko-KR") + "원";
@@ -52,6 +56,22 @@ export const price = (p: Pack) => (p.price_krw ? krw(p.price_krw) : "무료");
 export const roomPriceKrw = (p: Pack) => p.price_krw || extraCardKrw;
 export const roomPrice = (p: Pack) => krw(roomPriceKrw(p));
 export const isFree = (p: Pack) => p.price_krw === 0;
+/**
+ * 팩 선택·카드 고르기 화면의 가격 안내. 어떤 팩이든 둘 다 맞은 두 장은 무료이고
+ * 남은 '통한 카드'만 그 방에서 한 번 결제하거나 전 팩 패스로 연다.
+ */
+export const packNote = (p: Pack, ownsPass = false) =>
+  ownsPass
+    ? freePreviewText + " · 패스로 결과까지 열려요"
+    : freePreviewText + " · 나머지 " + roomPrice(p);
+/**
+ * 결제창이 실제로 부를 상품. 버튼에서 고른 상품을 그대로 따르되, 패스를 가진
+ * 기기는 단건 과금 대상이 아니라서 패스 적용으로 고정한다(금액을 다시 받지 않는다).
+ */
+export const checkoutProduct = (
+  selected: Product,
+  ownsPass: boolean,
+): Product => (ownsPass ? "pack" : selected);
 /** 다음 단계 팩. 마지막 팩 뒤에는 없다. */
 export const packAfter = (p: Pack) => packs[packs.indexOf(p) + 1];
 
@@ -152,7 +172,7 @@ const readings: Reading[] = [
   {
     chance: 48,
     headline: "아직은 서로 조심스러운 단계예요.",
-    body: "두 장이 통했어요. 마음이 없는 건 아니고, 아직 말을 아끼는 중이에요.",
+    body: "두 장이 통했어요. 마음이 없는 건 아니고 아직 말을 아끼는 중이에요.",
     next: "other-pack",
   },
   {

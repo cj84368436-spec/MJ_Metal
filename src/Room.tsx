@@ -261,7 +261,7 @@ export function Room({ id, guest, step, go, replay, toast }: Props) {
               setPurchase(null);
               toast(
                 product === "pack"
-                  ? "전 팩 패스를 열었어요"
+                  ? "패스로 이 방의 결과를 열었어요"
                   : "이번 방의 결과를 열었어요",
               );
             }}

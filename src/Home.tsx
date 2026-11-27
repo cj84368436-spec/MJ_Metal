@@ -1,6 +1,13 @@
 import { ArrowRight, Check } from "lucide-react";
 import { hasPass } from "./store";
-import { Pack, packs, isFree, passPrice } from "./domain";
+import {
+  Pack,
+  packs,
+  freeLead,
+  freeTail,
+  passPrice,
+  roomPrice,
+} from "./domain";
 import { asset } from "./paths";
 
 export const available = packs.filter(
@@ -33,7 +40,8 @@ export function Home({
       <div className="pack-list" role="radiogroup" aria-label="카드 테마">
         {available.map((p, i) => {
           const checked = p.id === selected.id;
-          const tag = isFree(p) ? "2장 무료" : pass ? "패스 보유" : "";
+          // 패스를 가진 기기는 네 팩 결과가 모두 열리고, 아니면 어느 팩이든 두 장까지 무료다.
+          const tag = pass ? "패스 보유" : "2장 무료";
           return (
             <button
               key={p.id}
@@ -69,16 +77,17 @@ export function Home({
             <>
               패스로 <b>4개 팩 결과</b>를 다 열 수 있어요
             </>
-          ) : isFree(selected) ? (
-            <>
-              보내기 무료 · 둘 다 맞은 <b>2장까지 무료</b>
-            </>
           ) : (
             <>
-              보내기 무료 · 결과는 결제 · 패스 <b>{passPrice}</b>
+              {freeLead} <b>{freeTail}</b>
             </>
           )}
         </p>
+        {!pass && (
+          <small className="theme-sub">
+            나머지 {roomPrice(selected)} · 전 팩 패스 {passPrice}
+          </small>
+        )}
         <button className="cta" onClick={start}>
           이 테마로 시작하기 <ArrowRight size={21} />
         </button>

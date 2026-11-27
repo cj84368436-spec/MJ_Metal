@@ -12,6 +12,9 @@ import {
   previewCards,
   reading,
   packAfter,
+  packNote,
+  checkoutProduct,
+  freePreviewText,
   Answer,
 } from "../src/domain";
 
@@ -20,7 +23,7 @@ const five = pack.questions.slice(0, 5);
 const yes: Answer[] = Array(5).fill("yes");
 describe("질문 팩과 선택", () => {
   it("팩별로 15개의 고유 문항, 정확한 가격과 답 3개를 제공한다", () => {
-    expect(packs.map((p) => p.price_krw)).toEqual([0, 1100, 1100, 1496]);
+    expect(packs.map((p) => p.price_krw)).toEqual([0, 1100, 1100, 1500]);
     expect(
       new Set(packs.flatMap((p) => p.questions.map((q) => q.id))).size,
     ).toBe(60);
@@ -149,10 +152,34 @@ describe("가격 구조", () => {
     expect(price(packs[0])).toBe("무료");
     expect(roomPriceKrw(packs[0])).toBe(1100);
     expect(roomPrice(packs[0])).toBe("1,100원");
-    expect(roomPrice(packs[3])).toBe("1,496원");
+    expect(roomPrice(packs[3])).toBe("1,500원");
+  });
+  it("팩4 단건 가격은 1,500원으로 서버와 같은 숫자를 쓴다", () => {
+    expect(roomPriceKrw(packs[3])).toBe(1500);
+    // 화면에는 세 자리 구분자가 붙여진다.
+    expect(roomPrice(packs[3])).toBe("1,500원");
   });
   it("전 팩 패스는 1,900원이다", () => {
     expect(passPrice).toBe("1,900원");
+  });
+});
+describe("결제창 상품 선택", () => {
+  it("버튼에서 고른 상품을 그대로 결제 상품으로 쓴다", () => {
+    expect(checkoutProduct("room", false)).toBe("room");
+    expect(checkoutProduct("pack", false)).toBe("pack");
+  });
+  it("패스 보유자는 단건 결제로 내려가지 않고 패스 적용으로 고정한다", () => {
+    expect(checkoutProduct("room", true)).toBe("pack");
+    expect(checkoutProduct("pack", true)).toBe("pack");
+  });
+  it("팩 가격 안내가 무료 공개와 남은 금액을 함께 알린다", () => {
+    expect(packNote(packs[3])).toBe(
+      "보내기 무료 · 둘 다 맞은 2장까지 무료 · 나머지 1,500원",
+    );
+    expect(packNote(packs[0])).toContain("나머지 1,100원");
+    expect(packNote(packs[1], true)).toBe(
+      freePreviewText + " · 패스로 결과까지 열려요",
+    );
   });
 });
 describe("결과 심리 분석", () => {

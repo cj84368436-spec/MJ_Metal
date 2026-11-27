@@ -343,6 +343,14 @@ label {
   font-weight: 400;
   color: var(--wine);
 }
+.theme-sub {
+  display: block;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.35;
+  color: var(--sub);
+  margin-top: -4px;
+}
 .paper-sheet {
   position: relative;
   isolation: isolate;
@@ -760,6 +768,12 @@ label {
   margin: 18px 0;
 }
 .ad-note {
+  color: var(--sub);
+}
+.pass-note {
+  display: block;
+  font-size: 14px;
+  line-height: 1.45;
   color: var(--sub);
 }
 .error,

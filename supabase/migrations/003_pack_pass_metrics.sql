@@ -158,7 +158,7 @@ begin
       insert into daily_metrics as m(day,pack,pack_purchases,pack_krw) values(metric_day,r.pack,1,3300)
         on conflict(day,pack) do update set pack_purchases=m.pack_purchases+1, pack_krw=m.pack_krw+excluded.pack_krw;
     else
-      price:=case r.pack when 'pack4' then 1496 else 1100 end;
+      price:=case r.pack when 'pack4' then 1500 else 1100 end;
       insert into daily_metrics as m(day,pack,room_purchases,room_krw) values(metric_day,r.pack,1,price)
         on conflict(day,pack) do update set room_purchases=m.room_purchases+1, room_krw=m.room_krw+excluded.room_krw;
     end if;

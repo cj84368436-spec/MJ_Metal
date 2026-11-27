@@ -275,12 +275,17 @@ export async function unlockRoom(
   const token = guest ?? get<Entry | null>("host." + id, null)?.host;
   if (product === "pack") {
     try {
-      await rpc("test_pack_pass", { id, token, device: deviceKey() });
+      await rpc("test_pack_pass", {
+        id,
+        token,
+        device: deviceKey(),
+        product: "pack",
+      });
     } catch (e) {
       if ((e as { code?: string }).code !== "PASS_ALREADY_OWNED") throw e;
     }
     put("trial-pass.all", true);
-  } else await rpc("test_unlock", { id, token });
+  } else await rpc("test_unlock", { id, token, product: "room" });
 }
 /**
  * 보상형 광고 보상을 방에 기록한다. 한 방에 한 번만 열린다.

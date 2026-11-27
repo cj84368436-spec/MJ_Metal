@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Download, LockKeyhole, Play } from "lucide-react";
-import { AdState, Pack, passPrice, reading, Result, roomPrice } from "./domain";
+import { AdState, Pack, passName, passPrice, reading, Result, roomPrice } from "./domain";
+import { hasPass } from "./store";
 import { buzz, reduced, showRewardedAd, adsAvailable, AdPhase } from "./bridge";
 import { asset } from "./paths";
 import "./room-sketch.css";
@@ -138,6 +139,8 @@ export function Results({
   const ratio = usePercent(result.percent);
   const analysis = reading(result.matched);
   const chance = usePercent(analysis.chance);
+  // 패스를 산 기기는 단건으로 돈을 다시 내지 않는다. 이 방은 보유한 패스로 연다.
+  const ownsPass = hasPass();
   const [initiallyOpen] = useState(
     () => new Set(result.opened.map((q) => q.id)),
   );
@@ -149,7 +152,7 @@ export function Results({
   }, []);
   const spend = roomPrice(pack);
   const full = unlocked || result.locked === 0;
-  const canAd = ad === "available" && adsAvailable();
+  const canAd = !ownsPass && ad === "available" && adsAvailable();
   const watching = phase !== "";
   async function watchAd() {
     if (watching) return;
@@ -242,7 +245,7 @@ export function Results({
             <i style={{ transform: `scaleX(${chance.value / 100})` }} />
           </div>
         </div>
-        <p>{analysis.body.replace(", ", " ")}</p>
+        <p>{analysis.body}</p>
         <small>
           둘 다 맞은 카드 수로 매긴 참고 수치예요 · 재미로 봐주세요.
         </small>
@@ -306,13 +309,27 @@ export function Results({
             <small>예시라서 결제 없이 보여드려요.</small>
           ) : (
             <>
-              <button className="cta" onClick={onUnlock}>
-                나머지 {result.locked}장 열기 · {spend}
-              </button>
-              {onPass && (
-                <button className="text-btn room-pass" onClick={onPass}>
-                  {passPrice} 전 팩 패스로 4개 팩 다 열기
-                </button>
+              {ownsPass && onPass ? (
+                <>
+                  <button className="cta" onClick={onPass}>
+                    {passName}로 이 방 열기
+                  </button>
+                  <small className="pass-note">
+                    이미 산 패스를 쓰는 거라 추가 결제는 없어요. 이 기기에서
+                    만드는 네 팩 결과도 그대로 열려요.
+                  </small>
+                </>
+              ) : (
+                <>
+                  <button className="cta" onClick={onUnlock}>
+                    나머지 {result.locked}장 열기 · {spend}
+                  </button>
+                  {onPass && (
+                    <button className="text-btn room-pass" onClick={onPass}>
+                      {passPrice} {passName}로 4개 팩 다 열기
+                    </button>
+                  )}
+                </>
               )}
               {canAd && (
                 <>
@@ -329,8 +346,8 @@ export function Results({
                         : "광고 보고 1장 무료로 더 열기"}
                   </button>
                   <small className="ad-note">
-                    광고 한 편을 끝까지 보면 이 방에서 한 번만 통한 카드 1장이
-                    바로 열려요.
+                    광고를 끝까지 보면 이 방의 통한 카드 1장이 바로 열려요.
+                    방마다 한 번이에요.
                   </small>
                   {adError && (
                     <small className="ad-note ad-error" role="alert">

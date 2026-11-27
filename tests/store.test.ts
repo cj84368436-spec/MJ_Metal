@@ -12,6 +12,8 @@ const seat = "room0001";
 type Call = { fn: string; op: string };
 type Reply = { ok: boolean; status?: number; body: unknown };
 let calls: Call[] = [];
+/** rpc로 보낸 args. 화면에서 고른 상품이 서버까지 그대로 갔는지 본다. */
+let sent: { op: string; args: Record<string, unknown> }[] = [];
 let reply: (fn: string, op: string) => Reply;
 let store: typeof import("../src/store");
 
@@ -37,6 +39,7 @@ beforeAll(async () => {
 
 beforeEach(() => {
   calls = [];
+  sent = [];
   reply = () => ({ ok: false, status: 400, body: { message: "UNEXPECTED" } });
   const local = new Map<string, string>();
   vi.stubGlobal("localStorage", {
@@ -52,8 +55,12 @@ beforeEach(() => {
     "fetch",
     vi.fn(async (url: string, init: { body: string }) => {
       const fn = String(url).split("/rest/v1/rpc/")[1];
-      const body = JSON.parse(init.body) as { op: string };
+      const body = JSON.parse(init.body) as {
+        op: string;
+        args: Record<string, unknown>;
+      };
       calls.push({ fn, op: body.op });
+      sent.push({ op: body.op, args: body.args });
       const r = reply(fn, body.op);
       return {
         ok: r.ok,
@@ -126,6 +133,25 @@ it("광고가 아닌 호출은 그대로 secret_five로 보낸다", async () => 
     { fn: "secret_five", op: "answer" },
     { fn: "secret_five", op: "test_unlock" },
   ]);
+});
+
+it("결제 상품을 화면에서 고른 그대로 서버에 실어 보낸다", async () => {
+  reply = (fn, op) =>
+    fn === "secret_five" && (op === "test_unlock" || op === "test_pack_pass")
+      ? { ok: true, body: true }
+      : { ok: false, status: 400, body: { message: "UNEXPECTED" } };
+  await store.unlockRoom(seat, TOKEN, "room");
+  await store.unlockRoom(seat, TOKEN, "pack");
+  expect(calls).toEqual([
+    { fn: "secret_five", op: "test_unlock" },
+    { fn: "secret_five", op: "test_pack_pass" },
+  ]);
+  // 단건은 room, 패스는 pack. 상품과 호출이 어긋나면 서버가 INVALID_PRODUCT로 막는다.
+  expect(sent.map((s) => [s.op, s.args.product])).toEqual([
+    ["test_unlock", "room"],
+    ["test_pack_pass", "pack"],
+  ]);
+  expect(typeof sent[1].args.device).toBe("string");
 });
 
 it("004가 없는 서버(함수 없음)에서는 광고를 숨기고 다시 묻지 않는다", async () => {

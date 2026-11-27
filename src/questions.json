@@ -2,7 +2,7 @@
   "version": "5.0.0",
   "app": "secret-five",
   "name": "우리 썸인가",
-  "description": "앱인토스 비게임 미니앱 60문항 풀. 한 판 = 5문항. 둘 다 yes인 카드만 공개한다. 둘 다 yes인 카드는 두 장까지 무료로 열고, 나머지는 단건 결제나 전 팩 패스로 연다.",
+  "description": "앱인토스 비게임 미니앱 60문항 풀. 한 판 = 5문항. 둘 다 yes인 카드만 공개한다. 둘 다 yes인 카드는 두 장까지 무료로 열고 나머지는 단건 결제나 전 팩 패스로 연다.",
   "answer_values": {
     "yes": "긍정",
     "maybe": "고민 중",
@@ -12,7 +12,7 @@
     {
       "id": "pack1",
       "title": "우리 썸인가",
-      "subtitle": "가볍게 톡하고 만날 때, 은근한 호감 확인",
+      "subtitle": "가볍게 톡하고 만나는 사이 은근한 호감 확인",
       "sku": null,
       "price_krw": 0,
       "questions": [
@@ -630,7 +630,7 @@
     {
       "id": "pack3",
       "title": "질투 나는데",
-      "subtitle": "슬슬 마음 확인하고 싶을 때, 질투·서운함·다음 단계",
+      "subtitle": "슬슬 마음 확인하고 싶을 때 꺼내는 질투·서운함·다음 단계",
       "sku": "secret-five-pack3",
       "price_krw": 1100,
       "questions": [
@@ -939,9 +939,9 @@
     {
       "id": "pack4",
       "title": "썸 끝내기",
-      "subtitle": "늦은 밤 헤어지기 아쉬운 순간, 고백 직전의 텐션",
+      "subtitle": "늦은 밤 헤어지기 아쉬운 순간 고백 직전의 텐션",
       "sku": "secret-five-pack4",
-      "price_krw": 1496,
+      "price_krw": 1500,
       "questions": [
         {
           "id": "p4-01",
