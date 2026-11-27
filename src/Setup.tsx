@@ -38,9 +38,10 @@ export function Setup({
               <span className="highlighter">오늘의 다섯 장</span>
             </h2>
             <p>
-              총 {pack.questions.length}장 중에서
-              <br />
-              오늘 묻고 싶은 다섯 장만 골라요!
+              총 {pack.questions.length}장 중에서{" "}
+              <span className="setup-lead-rest">
+                오늘 묻고 싶은 다섯 장만 골라요!
+              </span>
             </p>
             <div className="setup-choices">
               <button

@@ -52,15 +52,13 @@ export function Home({
                 </b>
                 <small>{captions[i]}</small>
               </span>
-              {checked && (
-                <span className="pack-tag">
-                  {isFree(p)
-                    ? "전부 무료"
-                    : hasPass(p)
-                      ? "이용권 보유"
-                      : "결과 " + price(p)}
-                </span>
-              )}
+              <span className="pack-tag">
+                {isFree(p)
+                  ? "전부 무료"
+                  : hasPass(p)
+                    ? "이용권 보유"
+                    : "결과 " + price(p)}
+              </span>
               <span className="radio-dot" aria-hidden="true">
                 {checked && <Check size={15} strokeWidth={3} />}
               </span>
