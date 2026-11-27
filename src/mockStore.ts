@@ -1,13 +1,11 @@
 import {
   Answer,
   complete,
-  isFree,
   matchCards,
   Pack,
   packs,
   validateFive,
   selectFive,
-  passPackId,
   Product,
   AdState,
 } from "./domain";
@@ -51,14 +49,12 @@ export function markAdBonusSeen(id: string) {
     /* 저장 공간이 막혀도 이번 화면은 동작한다. */
   }
 }
-function passKey(pack: Pack, buyer: Actor) {
-  return "trial-pass." + buyer + "." + pack.id;
+function passKey(buyer: Actor) {
+  return "trial-pass." + buyer;
 }
-export function hasPass(pack: Pack) {
-  return (
-    pack.id === passPackId &&
-    !!read<string | null>(passKey(pack, actor()), null)
-  );
+/** 전 팩 자유이용 패스. 한 번 사면 이 기기의 모든 팩 결과가 열린다. */
+export function hasPass() {
+  return !!read<string | null>(passKey(actor()), null);
 }
 export function recent(pack: Pack) {
   return read<string[][]>("recent." + pack.id, []);
@@ -107,7 +103,7 @@ export function createRoom(pack: Pack, ids: string[], answers: Answer[]) {
     guest: token(),
     created: Date.now(),
     hostAnswers: answers,
-    unlocked: isFree(pack) || hasPass(pack),
+    unlocked: hasPass(),
     nick: "",
   };
   write("room." + id, room);
@@ -135,7 +131,7 @@ export function viewRoom(id: string, guest: string | null) {
   const room = access(id, guest);
   const pack = packs.find((p) => p.id === room.packId)!;
   const qs = room.ids.map((id) => pack.questions.find((q) => q.id === id)!);
-  const unlocked = !!room.unlocked || isFree(pack);
+  const unlocked = !!room.unlocked;
   // 광고 시청 여부는 방 기록과 방 단위 localStorage 키 둘 다에서 복원한다.
   const adBonus = !!room.adBonus || adBonusSeen(id);
   const result = room.guestAnswers
@@ -206,12 +202,8 @@ export async function unlock(
     const { result, pack } = viewRoom(id, guest);
     if (!result?.locked) throw new Error("더 열 수 있는 카드가 없어요.");
     if (product === "pack") {
-      if (pack.id !== passPackId) throw new Error("이 팩에는 이용권이 없어요.");
-      const key = passKey(pack, seatActor(room, guest));
-      const previous = read<string | null>(key, null);
-      if (previous && previous !== id)
-        throw new Error("이미 이 팩 이용권이 있어요.");
-      write(key, id);
+      const key = passKey(seatActor(room, guest));
+      if (!read<string | null>(key, null)) write(key, "all");
     }
     write("room." + id, {
       ...room,

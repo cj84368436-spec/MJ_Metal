@@ -1,6 +1,6 @@
 import { ArrowRight, Check } from "lucide-react";
 import { hasPass } from "./store";
-import { Pack, packs, price, isFree } from "./domain";
+import { Pack, packs, isFree, passPrice } from "./domain";
 import { asset } from "./paths";
 
 export const available = packs.filter(
@@ -24,6 +24,7 @@ export function Home({
   onSelect: (pack: Pack) => void;
   start: () => void;
 }) {
+  const pass = hasPass();
   return (
     <section className="theme-screen">
       <h1 className="screen-title">
@@ -32,6 +33,7 @@ export function Home({
       <div className="pack-list" role="radiogroup" aria-label="카드 테마">
         {available.map((p, i) => {
           const checked = p.id === selected.id;
+          const tag = isFree(p) ? "2장 무료" : pass ? "패스 보유" : "";
           return (
             <button
               key={p.id}
@@ -52,13 +54,7 @@ export function Home({
                 </b>
                 <small>{captions[i]}</small>
               </span>
-              <span className="pack-tag">
-                {isFree(p)
-                  ? "전부 무료"
-                  : hasPass(p)
-                    ? "이용권 보유"
-                    : "결과 " + price(p)}
-              </span>
+              {tag && <span className="pack-tag">{tag}</span>}
               <span className="radio-dot" aria-hidden="true">
                 {checked && <Check size={15} strokeWidth={3} />}
               </span>
@@ -69,14 +65,18 @@ export function Home({
       <div className="theme-bottom">
         <p className="theme-note">
           <img src={asset("sketch/crown.png")} alt="" />
-          {isFree(selected) ? (
+          {pass ? (
             <>
-              결과 확인 · 보내기 모두 <b>무료!</b>
+              패스로 <b>4개 팩 결과</b>를 다 열 수 있어요
             </>
-          ) : hasPass(selected) ? (
-            "이용권으로 결과까지 열려요"
+          ) : isFree(selected) ? (
+            <>
+              보내기 무료 · 둘 다 맞은 <b>2장까지 무료</b>
+            </>
           ) : (
-            <>보내기는 무료 · 추가 결과 {price(selected)}</>
+            <>
+              보내기 무료 · 결과는 결제 · 패스 <b>{passPrice}</b>
+            </>
           )}
         </p>
         <button className="cta" onClick={start}>
@@ -89,12 +89,12 @@ export function Home({
 
 export function Cover({ start }: { start: () => void }) {
   return (
-    <section className="cover" aria-label="썸 속마음 질문">
+    <section className="cover" aria-label="우리 썸인가">
       <img
         src={asset("secret-five-cover.jpg")}
         width={720}
         height={1280}
-        alt="우리 썸인가? 비밀 다섯 장. 두 사람이 마주 보고 있어요."
+        alt="우리 썸인가? 속마음 5장. 두 사람이 마주 보고 있어요."
       />
       <button
         className="cover-start"

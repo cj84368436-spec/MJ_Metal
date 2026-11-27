@@ -1,8 +1,8 @@
 {
-  "version": "4.0.0",
+  "version": "5.0.0",
   "app": "secret-five",
-  "name": "썸 속마음 질문",
-  "description": "앱인토스 비게임 미니앱 60문항 풀. 한 판 = 5문항. 둘 다 yes인 카드만 공개한다.",
+  "name": "우리 썸인가",
+  "description": "앱인토스 비게임 미니앱 60문항 풀. 한 판 = 5문항. 둘 다 yes인 카드만 공개한다. 둘 다 yes인 카드는 두 장까지 무료로 열고, 나머지는 단건 결제나 전 팩 패스로 연다.",
   "answer_values": {
     "yes": "긍정",
     "maybe": "고민 중",
@@ -938,7 +938,7 @@
     },
     {
       "id": "pack4",
-      "title": "참기 힘든데",
+      "title": "썸 끝내기",
       "subtitle": "늦은 밤 헤어지기 아쉬운 순간, 고백 직전의 텐션",
       "sku": "secret-five-pack4",
       "price_krw": 1496,

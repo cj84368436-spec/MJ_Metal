@@ -4,9 +4,14 @@ import {
   selectFive,
   validateFive,
   matchCards,
-  unlockPrice,
+  roomPriceKrw,
+  roomPrice,
+  price,
+  passPrice,
   isFree,
   previewCards,
+  reading,
+  packAfter,
   Answer,
 } from "../src/domain";
 
@@ -43,6 +48,14 @@ describe("질문 팩과 선택", () => {
     expect(new Set(rounds.flat()).size).toBe(15);
     expect(selectFive(pack, rounds).sort()).toEqual([...rounds[0]].sort());
   });
+  it("다음 단계 팩은 4단계로 이어지고 마지막 팩 뒤에는 없다", () => {
+    expect(packs.map(packAfter).map((p) => p?.id)).toEqual([
+      "pack2",
+      "pack3",
+      "pack4",
+      undefined,
+    ]);
+  });
 });
 describe("결과 공개와 잠금 해제", () => {
   it("YES × YES 이외의 여덟 조합은 양방향 모두 아무 카드도 열지 않는다", () => {
@@ -65,17 +78,17 @@ describe("결과 공개와 잠금 해제", () => {
         });
       }
   });
-  it("잠금 해제 전에는 겹친 첫 카드 한 장만, 해제 후에는 겹친 카드 전부를 연다", () => {
+  it("잠금 해제 전에는 통한 카드 두 장까지, 해제 후에는 통한 카드 전부를 연다", () => {
     const guest: Answer[] = ["yes", "maybe", "yes", "yes", "no"];
     const preview = matchCards(five, yes, guest, false);
-    expect(previewCards).toBe(1);
+    expect(previewCards).toBe(2);
     expect(preview.matched).toBe(3);
     expect(preview.percent).toBe(60);
-    expect(preview.opened.map((q) => q.id)).toEqual([five[0].id]);
-    expect(preview.locked).toBe(2);
+    expect(preview.opened.map((q) => q.id)).toEqual([five[0].id, five[2].id]);
+    expect(preview.locked).toBe(1);
     expect(preview.sealed).toBe(2);
     expect(JSON.stringify(preview)).not.toContain(five[1].question);
-    expect(JSON.stringify(preview)).not.toContain(five[2].question);
+    expect(JSON.stringify(preview)).not.toContain(five[3].question);
     const full = matchCards(five, yes, guest, true);
     expect(full.opened.map((q) => q.id)).toEqual([
       five[0].id,
@@ -85,31 +98,94 @@ describe("결과 공개와 잠금 해제", () => {
     expect(full.locked).toBe(0);
     expect(full.sealed).toBe(2);
   });
+  it("두 장만 통하면 잠글 카드가 없고, 세 장부터 한 장이 잠긴다", () => {
+    const two = matchCards(five, yes, ["yes", "no", "yes", "no", "no"], false);
+    expect(two.opened).toHaveLength(2);
+    expect(two.locked).toBe(0);
+    const four = matchCards(
+      five,
+      yes,
+      ["yes", "yes", "yes", "yes", "no"],
+      false,
+    );
+    expect(four.opened).toHaveLength(2);
+    expect(four.locked).toBe(2);
+  });
   it("미완료 응답으로 결과를 만들지 않는다", () => {
     expect(() => matchCards(five, yes, [], false)).toThrow();
   });
-  it("보상형 광고를 보면 겹친 카드 한 장이 더 열리고, 해제 뒤에는 영향이 없다", () => {
-    const guest: Answer[] = ["yes", "maybe", "yes", "yes", "no"];
+  it("보상형 광고로 통한 카드 한 장을 더 열고, 해제 뒤에는 영향이 없다", () => {
+    const guest: Answer[] = ["yes", "maybe", "yes", "yes", "yes"];
     const bonus = matchCards(five, yes, guest, false, true);
-    expect(bonus.opened.map((q) => q.id)).toEqual([five[0].id, five[2].id]);
+    expect(bonus.opened.map((q) => q.id)).toEqual([
+      five[0].id,
+      five[2].id,
+      five[3].id,
+    ]);
     expect(bonus.locked).toBe(1);
-    expect(bonus.adBonusId).toBe(five[2].id);
-    expect(JSON.stringify(bonus)).not.toContain(five[3].question);
+    expect(bonus.adBonusId).toBe(five[3].id);
+    expect(JSON.stringify(bonus)).not.toContain(five[4].question);
     const full = matchCards(five, yes, guest, true, true);
-    expect(full.opened).toHaveLength(3);
+    expect(full.opened).toHaveLength(4);
     expect(full.locked).toBe(0);
     expect(full.adBonusId).toBeUndefined();
   });
-  it("겹친 카드가 한 장이면 광고로 더 열 카드가 없다", () => {
-    const one = matchCards(five, yes, ["yes", "no", "no", "no", "no"], false, true);
-    expect(one.opened).toHaveLength(1);
-    expect(one.locked).toBe(0);
-    expect(one.adBonusId).toBeUndefined();
+  it("통한 카드가 두 장 이하면 광고로 더 열 카드가 없다", () => {
+    const two = matchCards(
+      five,
+      yes,
+      ["yes", "no", "yes", "no", "no"],
+      false,
+      true,
+    );
+    expect(two.opened).toHaveLength(2);
+    expect(two.locked).toBe(0);
+    expect(two.adBonusId).toBeUndefined();
   });
 });
-it("무료 팩은 결과가 0원이고 유료 팩만 잠금 해제 값을 가진다", () => {
-  expect(packs.map(isFree)).toEqual([true, false, false, false]);
-  expect(unlockPrice(packs[0])).toBe(0);
-  expect(unlockPrice(packs[1])).toBe(1100);
-  expect(unlockPrice(packs[3])).toBe(1496);
+describe("가격 구조", () => {
+  it("무료 팩은 표시 가격이 0원이고, 남은 카드는 1,100원에 연다", () => {
+    expect(packs.map(isFree)).toEqual([true, false, false, false]);
+    expect(price(packs[0])).toBe("무료");
+    expect(roomPriceKrw(packs[0])).toBe(1100);
+    expect(roomPrice(packs[0])).toBe("1,100원");
+    expect(roomPrice(packs[3])).toBe("1,496원");
+  });
+  it("전 팩 패스는 1,900원이다", () => {
+    expect(passPrice).toBe("1,900원");
+  });
+});
+describe("결과 심리 분석", () => {
+  it("통한 카드 수에 따라 호감 확률과 다음 행동이 정해진다", () => {
+    const table = [
+      [5, 94, "confess"],
+      [4, 86, "next-pack"],
+      [3, 74, "next-pack"],
+      [2, 48, "other-pack"],
+      [1, 40, "other-pack"],
+      [0, 32, "other-pack"],
+    ] as const;
+    for (const [matched, chance, next] of table) {
+      const r = reading(matched);
+      expect(r.chance).toBe(chance);
+      expect(r.next).toBe(next);
+      expect(r.headline.length).toBeGreaterThan(4);
+      expect(r.body.length).toBeGreaterThan(10);
+    }
+  });
+  it("통한 카드가 많을수록 호감 확률이 높고, 교과서 문구를 쓰지 않는다", () => {
+    let previous = 0;
+    for (let matched = 0; matched <= 5; matched++) {
+      const r = reading(matched);
+      expect(r.chance).toBeGreaterThan(previous);
+      previous = r.chance;
+      expect(r.headline + " " + r.body).not.toMatch(
+        /말해보세요|해보세요|권해요|중요해요|필요가 있습니다/,
+      );
+    }
+  });
+  it("범위를 벗어난 값은 양 끝으로 맞춘다", () => {
+    expect(reading(-1).chance).toBe(32);
+    expect(reading(9).chance).toBe(94);
+  });
 });

@@ -210,7 +210,7 @@ export function CardStack({
       )}
       <div className="answer-meta">
         <small>
-          {guest ? "받은 카드" : "내 답"} · {pack.title}
+          {guest ? "받은 카드 · 속마음 5장" : "내 답 · " + pack.title}
         </small>
         {!!answers.length && (
           <button

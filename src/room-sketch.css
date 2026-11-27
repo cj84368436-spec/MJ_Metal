@@ -290,3 +290,105 @@
 .room-lock {
   color: var(--wine);
 }
+
+/* 결과 화면 심리 분석 카드 */
+.room-reading {
+  display: grid;
+  gap: 7px;
+  justify-items: center;
+  margin-top: 14px;
+  padding: 5% 4% 4.5%;
+}
+
+.room-reading-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--wine);
+  font: clamp(13px, 4.4cqi, 16px) var(--hand);
+}
+
+.room-reading-label img {
+  width: 20px;
+  height: auto;
+}
+
+.room-reading h2 {
+  margin: 0;
+  font-size: clamp(19px, 6.8cqi, 28px);
+  line-height: 1.28;
+  text-wrap: balance;
+}
+
+.room-reading p {
+  margin: 0;
+  font-size: clamp(14px, 4.8cqi, 18px);
+}
+
+.room-reading small {
+  font-size: clamp(11px, 3.6cqi, 13px);
+}
+
+.room-chance {
+  display: grid;
+  gap: 1px;
+  justify-items: center;
+  width: 100%;
+  margin-top: 2px;
+}
+
+.room-chance span {
+  font-size: clamp(12px, 4cqi, 15px);
+  color: var(--sub);
+}
+
+.room-chance strong {
+  color: var(--wine);
+  font: clamp(30px, 10.5cqi, 44px) / 1.1 var(--hand);
+}
+
+.room-chance-track {
+  width: 62%;
+  height: clamp(7px, 2.2cqi, 10px);
+  margin-top: 2px;
+  border-radius: 999px;
+  background: #ecd9cd;
+  overflow: hidden;
+}
+
+.room-chance-track i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--wine);
+  transition: width 0.9s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.room-pass {
+  color: var(--wine);
+  font-size: clamp(13px, 4.2cqi, 16px);
+}
+
+/* 다음 단계 팩 유도 */
+.room-next {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+  margin-top: 22px;
+  padding: 5% 4%;
+  border: 1.4px solid #d8b98f;
+  border-radius: 19px 17px 20px 16px;
+  background: #fff0d6;
+}
+
+.room-next h2 {
+  margin: 0;
+  font-size: clamp(19px, 6.6cqi, 27px);
+  line-height: 1.28;
+  text-wrap: balance;
+}
+
+.room-next p {
+  margin: 0;
+  font-size: clamp(13px, 4.5cqi, 17px);
+}

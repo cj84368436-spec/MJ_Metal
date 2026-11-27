@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import { ArrowRight, Download, LockKeyhole, Play } from "lucide-react";
-import { AdState, Pack, price, Result } from "./domain";
+import {
+  AdState,
+  Pack,
+  passPrice,
+  reading,
+  Result,
+  roomPrice,
+} from "./domain";
 import { buzz, reduced, showRewardedAd, adsAvailable, AdPhase } from "./bridge";
 import { asset } from "./paths";
 import "./room-sketch.css";
@@ -44,16 +51,19 @@ async function exportImage(result: Result) {
   c.stroke();
   c.fillStyle = "#1B1917";
   c.font = "600 40px sans-serif";
-  c.fillText("썸 속마음 질문", 100, 150);
+  c.fillText("우리 썸인가", 100, 150);
   c.fillStyle = "#B4493A";
   c.font = "600 108px sans-serif";
   c.fillText(result.matched + " / 5", 96, 320);
   c.fillStyle = "#1B1917";
   c.font = "500 42px sans-serif";
   c.fillText("5장 중 " + result.matched + "장이 통했어요", 98, 404);
+  c.fillStyle = "#B4493A";
+  c.font = "500 34px sans-serif";
+  c.fillText("호감 확률 " + reading(result.matched).chance + "%", 98, 462);
   c.fillStyle = "#7A7268";
   c.font = "400 30px sans-serif";
-  let y = 530;
+  let y = 560;
   for (const q of result.opened) {
     let row = "";
     for (const char of q.question) {
@@ -71,7 +81,7 @@ async function exportImage(result: Result) {
     canvas.toBlob(res, "image/png"),
   );
   if (!blob) throw new Error();
-  const file = new File([blob], "썸-속마음-질문.png", { type: "image/png" });
+  const file = new File([blob], "우리-썸인가.png", { type: "image/png" });
   if (navigator.canShare?.({ files: [file] }))
     await navigator.share({ files: [file] });
   else {
@@ -91,7 +101,12 @@ type Props = {
   guest?: boolean;
   ad?: AdState;
   onUnlock?: () => void;
+  onPass?: () => void;
   onAdReward?: () => void | Promise<void>;
+  /** 다음 단계 팩을 바로 보낼 때. 마지막 팩이면 없다. */
+  onNext?: () => void;
+  /** 다음 단계 팩 이름. 받는 사람에게는 숨긴다. */
+  nextTitle?: string;
   again: () => void;
   replayBusy?: boolean;
   home: () => void;
@@ -104,19 +119,24 @@ export function Results({
   guest,
   ad = "none",
   onUnlock,
+  onPass,
   onAdReward,
+  onNext,
+  nextTitle,
   again,
   replayBusy = false,
   home,
 }: Props) {
   const n = usePercent(result.percent);
+  const analysis = reading(result.matched);
+  const chance = usePercent(analysis.chance);
   const [error, setError] = useState("");
   const [adError, setAdError] = useState("");
   const [phase, setPhase] = useState<AdPhase | "">("");
   useEffect(() => {
     buzz("success");
   }, []);
-  const spend = price(pack);
+  const spend = roomPrice(pack);
   const full = unlocked || result.locked === 0;
   const canAd = ad === "available" && adsAvailable();
   const watching = phase !== "";
@@ -185,6 +205,31 @@ export function Results({
           ))}
         </div>
       </div>
+
+      <section
+        className={"paper-sheet room-reading " + analysis.next}
+        aria-label="속마음 분석"
+      >
+        <span className="room-reading-label">
+          <img src={asset("sketch/heart.png")} alt="" />
+          속마음 분석
+        </span>
+        <h2>{analysis.headline}</h2>
+        <div className="room-chance">
+          <span>호감 확률</span>
+          <strong aria-label={`호감 확률 ${analysis.chance}퍼센트`}>
+            {chance === null ? "…" : chance + "%"}
+          </strong>
+          <div className="room-chance-track" aria-hidden="true">
+            <i style={{ width: (chance ?? analysis.chance) + "%" }} />
+          </div>
+        </div>
+        <p>{analysis.body}</p>
+        <small>
+          둘 다 맞은 카드 수로 매긴 참고 수치예요 · 재미로 봐주세요.
+        </small>
+      </section>
+
       {!demo && pack.id !== "pack4" && (
         <button
           className="cta room-save"
@@ -204,7 +249,7 @@ export function Results({
       {error && <p role="alert">{error}</p>}
 
       <div className="room-result-context">
-        <strong>{pack.title}</strong>
+        <strong>{guest ? "받은 카드 · 속마음 5장" : pack.title}</strong>
         {!result.matched ? (
           <p>서로 뭘 골랐는지는 알 수 없어요. 그것도 비밀이에요.</p>
         ) : (
@@ -240,8 +285,13 @@ export function Results({
           ) : (
             <>
               <button className="cta" onClick={onUnlock}>
-                겹친 카드 {result.locked}장 더 열기 · {spend}
+                나머지 {result.locked}장 열기 · {spend}
               </button>
+              {onPass && (
+                <button className="text-btn room-pass" onClick={onPass}>
+                  {passPrice} 전 팩 패스로 4개 팩 다 열기
+                </button>
+              )}
               {canAd && (
                 <>
                   <button
@@ -257,7 +307,7 @@ export function Results({
                         : "광고 보고 1장 무료로 더 열기"}
                   </button>
                   <small className="ad-note">
-                    광고 한 편을 끝까지 보면 이 방에서 한 번, 겹친 카드 1장이
+                    광고 한 편을 끝까지 보면 이 방에서 한 번, 통한 카드 1장이
                     바로 열려요.
                   </small>
                   {adError && (
@@ -279,8 +329,31 @@ export function Results({
 
       {result.sealed > 0 && (
         <p className="sealed">
-          공개되지 않은 {result.sealed}장의 답은 둘만의 비밀로 남아요.
+          아쉽게 엇갈린 질문 {result.sealed}장 · 누가 뭘 골랐는지는 알 수 없어요.
         </p>
+      )}
+
+      {!demo && onNext && (
+        <section className="room-next">
+          <h2>
+            {nextTitle ? "다음 단계 · " + nextTitle : "다음 단계 팩"}
+          </h2>
+          <p>
+            {analysis.next === "confess"
+              ? "이 분위기 그대로 한 판 더 하면 서로 말할 게 더 줄어들어요."
+              : analysis.next === "next-pack"
+                ? "안 꺼낸 속마음은 다음 팩에서 이어서 물어봐요."
+                : "다른 팩으로 한 번 더 물어보면 서로 더 정확해져요."}
+          </p>
+          <button className="cta" disabled={replayBusy} onClick={onNext}>
+            {replayBusy
+              ? "새 카드 고르는 중…"
+              : analysis.next === "other-pack"
+                ? "다른 팩 보내기"
+                : "다음 단계 팩 보내기"}
+            <ArrowRight size={18} />
+          </button>
+        </section>
       )}
 
       <div className="actions">
@@ -291,11 +364,7 @@ export function Results({
           </button>
         ) : (
           <>
-            <button
-              className={result.locked ? "ghost" : "cta"}
-              disabled={replayBusy}
-              onClick={again}
-            >
+            <button className="ghost" disabled={replayBusy} onClick={again}>
               {replayBusy
                 ? "새 카드 고르는 중…"
                 : guest

@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Check, ChevronRight, X } from "lucide-react";
 import {
   Pack,
-  price,
+  isFree,
+  roomPrice,
   selectFive,
   Product,
+  passName,
   passPrice,
-  passPackId,
 } from "./domain";
 import { recent, hasPass } from "./store";
 import { asset } from "./paths";
@@ -63,11 +64,11 @@ export function Setup({
           </div>
           <small className="setup-meta">
             {pack.title} ·{" "}
-            {pack.price_krw
-              ? hasPass(pack)
-                ? "이용권으로 결과까지 열려요"
-                : "보내기는 무료예요"
-              : "결과까지 무료예요"}
+            {hasPass()
+              ? "패스로 결과까지 열려요"
+              : isFree(pack)
+                ? "보내기 무료 · 둘 다 맞은 2장까지 무료"
+                : "보내기 무료 · 결과 " + roomPrice(pack)}
           </small>
           {pack.id === "pack4" && (
             <p className="notice small">
@@ -131,16 +132,18 @@ export function Setup({
 export function Purchase({
   pack,
   remaining,
+  initial = "room",
   cancel,
   confirm,
 }: {
   pack: Pack;
   remaining: number;
+  initial?: Product;
   cancel: () => void;
   confirm: (product: Product) => Promise<void>;
 }) {
-  const [selection, setProduct] = useState<Product>("room");
-  const eligible = pack.id === passPackId && !hasPass(pack);
+  const [selection, setProduct] = useState<Product>(initial);
+  const eligible = !hasPass();
   const product = eligible ? selection : "room";
   const ref = useRef<HTMLDialogElement>(null),
     timer = useRef(0),
@@ -206,8 +209,8 @@ export function Purchase({
           <X />
         </button>
       </div>
-      <h1 id="purchase-title">겹친 카드 {remaining}장 더 열기</h1>
-      <p>두 사람 모두 남은 카드와 이어질 한마디를 볼 수 있어요.</p>
+      <h1 id="purchase-title">통한 카드 {remaining}장 더 열기</h1>
+      <p>둘 다 좋다고 한 카드와 이어질 한마디를 두 사람 모두 볼 수 있어요.</p>
       {eligible ? (
         <fieldset className="offers" disabled={state !== "ready"}>
           <legend>이용 범위 선택</legend>
@@ -224,21 +227,21 @@ export function Purchase({
                 onChange={() => setProduct(value)}
               />
               <span>
-                <b>{value === "room" ? "이번 방만 열기" : "이 팩 계속 쓰기"}</b>
+                <b>{value === "room" ? "이번 방만 열기" : passName}</b>
                 <small>
                   {value === "room"
-                    ? "지금 함께 답한 방 1개"
-                    : "이번 방과 앞으로 이 기기에서 내가 만드는 ‘" +
-                      pack.title +
-                      "’ 방"}
+                    ? "지금 함께 답한 방 하나 · 남은 " +
+                      remaining +
+                      "장"
+                    : "이 기기에서 만드는 4개 팩 결과 전부"}
                 </small>
               </span>
-              <strong>{value === "room" ? price(pack) : passPrice}</strong>
+              <strong>{value === "room" ? roomPrice(pack) : passPrice}</strong>
             </label>
           ))}
         </fieldset>
       ) : (
-        <p className="sheet-price">이번 방 · {price(pack)}</p>
+        <p className="sheet-price">이번 방 · {roomPrice(pack)}</p>
       )}
       <p className="notice small">
         서로 다른 카드는 끝까지 비밀로 남아요. 상대의 답도 보이지 않아요.
@@ -248,7 +251,7 @@ export function Purchase({
           ? "여는 중…"
           : error
             ? "다시 시도"
-            : (product === "room" ? price(pack) : passPrice) + "으로 열기"}
+            : (product === "room" ? roomPrice(pack) : passPrice) + "으로 열기"}
       </button>
       <small className="sheet-note">모의 결제 · 실제 청구 금액 0원</small>
       {error && <p role="alert">{error}</p>}

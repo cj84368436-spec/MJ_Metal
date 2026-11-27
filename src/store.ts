@@ -6,7 +6,6 @@ import {
   Result,
   Product,
   Referral,
-  passPackId,
   validateFive,
 } from "./domain";
 import * as mock from "./mockStore";
@@ -32,14 +31,11 @@ function deviceKey(): string {
   }
   return key;
 }
-export function hasPass(pack: Pack) {
-  return shared
-    ? pack.id === passPackId && get("trial-pass." + pack.id, false)
-    : mock.hasPass(pack);
+export function hasPass() {
+  return shared ? get("trial-pass.all", false) : mock.hasPass();
 }
 const messages: Record<string, string> = {
-  PASS_ALREADY_OWNED:
-    "이 기기에 이미 팩 이용권이 있어요. 이 방만 열 수 있어요.",
+  PASS_ALREADY_OWNED: "이 기기에 이미 전 팩 패스가 있어요.",
   NO_LOCKED_MATCHES: "더 열 수 있는 카드가 없어요.",
   ALREADY_UNLOCKED: "이미 이 방의 결과가 열렸어요.",
   INVALID_ACTION: "공유 방 서버에 최신 마이그레이션을 적용해주세요.",
@@ -218,7 +214,7 @@ export async function viewRoom(
   const pack = packs.find((p) => p.id === s.pack)!;
   const qs = (ids: string[] | null) =>
     (ids ?? []).map((qid) => pack.questions.find((q) => q.id === qid)!);
-  const unlocked = s.unlocked || pack.price_krw === 0;
+  const unlocked = s.unlocked;
   let result: Result | null =
     s.matched === null
       ? null
@@ -281,11 +277,9 @@ export async function unlockRoom(
     try {
       await rpc("test_pack_pass", { id, token, device: deviceKey() });
     } catch (e) {
-      if ((e as { code?: string }).code === "PASS_ALREADY_OWNED")
-        put("trial-pass." + passPackId, true);
-      throw e;
+      if ((e as { code?: string }).code !== "PASS_ALREADY_OWNED") throw e;
     }
-    put("trial-pass." + passPackId, true);
+    put("trial-pass.all", true);
   } else await rpc("test_unlock", { id, token });
 }
 /**

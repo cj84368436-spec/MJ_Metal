@@ -6,7 +6,7 @@ import {
   Clock3,
   Link as LinkIcon,
 } from "lucide-react";
-import { Answer, Pack, Referral } from "./domain";
+import { Answer, Pack, Product, Referral, packAfter, selectFive } from "./domain";
 import {
   setNickname,
   submitGuest,
@@ -14,6 +14,7 @@ import {
   shared,
   redeal,
   claimAdBonus,
+  recent,
 } from "./store";
 import { buzz, shareText, inviteURL } from "./bridge";
 import { CardStack } from "./CardStack";
@@ -21,6 +22,7 @@ import { useRoom } from "./useRoom";
 import { asset } from "./paths";
 import { Results } from "./Results";
 import { Purchase } from "./Setup";
+import { available } from "./Home";
 
 type Props = {
   id: string;
@@ -44,7 +46,7 @@ export function Room({ id, guest, step, go, replay, toast }: Props) {
   }
   const [nick, setNick] = useState("");
   const [replayBusy, setReplayBusy] = useState(false);
-  const [purchase, setPurchase] = useState(false);
+  const [purchase, setPurchase] = useState<Product | null>(null);
   const key = "guest-draft." + id + "." + guest;
   const [answers, setAnswers] = useState<Answer[]>(() =>
     JSON.parse(sessionStorage.getItem(key) ?? "[]"),
@@ -152,6 +154,9 @@ export function Room({ id, guest, step, go, replay, toast }: Props) {
       </section>
     );
   const { pack } = data;
+  const nextUp = packAfter(pack);
+  // 10대용 빌드에서는 마지막 팩을 권하지 않는다.
+  const nextPack = nextUp && available.includes(nextUp) ? nextUp : undefined;
   const href = link;
   const here = guest ? invite : base;
   const next = (s: string) => here + (guest ? "&" : "?") + "step=" + s;
@@ -189,7 +194,27 @@ export function Room({ id, guest, step, go, replay, toast }: Props) {
           unlocked={data.unlocked}
           guest={!!guest}
           ad={data.ad}
-          onUnlock={() => setPurchase(true)}
+          onUnlock={() => setPurchase("room")}
+          onPass={() => setPurchase("pack")}
+          onNext={
+            nextPack
+              ? async () => {
+                  if (replayBusy) return;
+                  setReplayBusy(true);
+                  try {
+                    replay(
+                      nextPack,
+                      selectFive(nextPack, recent(nextPack)),
+                      guest ? { room: id, guest } : undefined,
+                    );
+                  } catch (e) {
+                    setError((e as Error).message);
+                    setReplayBusy(false);
+                  }
+                }
+              : undefined
+          }
+          nextTitle={guest ? "" : nextPack?.title}
           onAdReward={async () => {
             try {
               await claimAdBonus(id, guest);
@@ -216,14 +241,15 @@ export function Room({ id, guest, step, go, replay, toast }: Props) {
         {purchase && data.result.locked > 0 && (
           <Purchase
             pack={pack}
-            cancel={() => setPurchase(false)}
+            initial={purchase}
+            cancel={() => setPurchase(null)}
             remaining={data.result.locked}
             confirm={async (product) => {
               try {
                 await unlockRoom(id, guest, product);
               } catch (e) {
                 if ((e as { code?: string }).code === "ALREADY_UNLOCKED") {
-                  setPurchase(false);
+                  setPurchase(null);
                   refresh();
                   toast("이미 이 방의 결과가 열렸어요");
                   return;
@@ -232,10 +258,10 @@ export function Room({ id, guest, step, go, replay, toast }: Props) {
               }
 
               refresh();
-              setPurchase(false);
+              setPurchase(null);
               toast(
                 product === "pack"
-                  ? `${pack.title} 팩을 열었어요`
+                  ? "전 팩 패스를 열었어요"
                   : "이번 방의 결과를 열었어요",
               );
             }}
@@ -280,7 +306,7 @@ export function Room({ id, guest, step, go, replay, toast }: Props) {
               alt=""
             />
             <div className="paper-sheet room-letter">
-              <span>{pack.title}</span>
+              <span>속마음 5장</span>
               <h2>
                 {data.nick ? data.nick + "님이" : "누군가"} 카드 5장을 보냈어요
               </h2>
@@ -319,7 +345,7 @@ export function Room({ id, guest, step, go, replay, toast }: Props) {
                 try {
                   if (
                     await shareText(
-                      "대놓고 못 물어본 것 5개. 둘 다 좋으면 열려.\n" + href,
+                      "질문 카드가 왔어요. 둘 다 좋으면 열려요.\n" + href,
                     )
                   )
                     toast("공유 시트를 열었어요");
@@ -414,7 +440,7 @@ export function Room({ id, guest, step, go, replay, toast }: Props) {
             <small>
               {data.unlocked
                 ? "이 방은 둘 다 좋다고 한 카드가 전부 열려요."
-                : "보내기는 무료예요. 결과는 첫 카드까지 무료로 열려요."}
+                : "보내기는 무료예요. 결과는 둘 다 맞은 두 장까지 무료로 열려요."}
             </small>
             {switcher}
           </details>
