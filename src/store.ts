@@ -41,7 +41,7 @@ const messages: Record<string, string> = {
   INVALID_ACTION: "공유 방 서버에 최신 마이그레이션을 적용해주세요.",
   INVALID_LINK: "초대 링크를 확인해주세요. 보낸 사람에게 다시 받아볼래요?",
   EXPIRED: "이 카드는 만료됐어요. 새 카드를 만들까요?",
-  INVALID_NICK: "닉네임은 편안한 말로, 글자나 숫자 2~6자로 적어주세요.",
+  INVALID_NICK: "닉네임은 편안한 말로 글자나 숫자 2~6자로 적어주세요.",
   TEST_PURCHASE_DISABLED: "이 서버에서는 모의 결제가 꺼져 있어요.",
   TOO_MANY: "잠시 뒤 다시 시도해주세요.",
 };

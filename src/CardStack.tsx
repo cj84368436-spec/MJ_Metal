@@ -72,6 +72,10 @@ export function CardStack({
       : y < 0
         ? "maybe"
         : null;
+  const distance = Math.max(Math.abs(drag.x), Math.abs(drag.y));
+  const preview = distance > 57 ? direction(drag.x, drag.y) : null;
+  // Limit the visual travel while keeping the original swipe distance for selection.
+  const lean = Math.tanh(drag.x / 110);
   return (
     <section className="flow stack-flow">
       <div
@@ -87,32 +91,28 @@ export function CardStack({
       </div>
       {q ? (
         <>
-          <div className="paper-sheet answer-sheet">
+          <div
+            key={q.id}
+            className="paper-sheet answer-sheet"
+            data-choice={chosen ?? undefined}
+            data-dragging={distance > 0 || undefined}
+            style={
+              distance
+                ? {
+                    transform: `translate(${lean * 6}px, ${Math.tanh(drag.y / 110) * 9}px) rotate(${lean * 2.4}deg)`,
+                  }
+                : undefined
+            }
+          >
             <img
               className="sheet-heart"
               src={asset("sketch/question-heart.png")}
               alt=""
             />
             <article
-              key={q.id}
-              className={"question panel " + (chosen ? "leaving" : "")}
-              style={
-                drag.x || drag.y
-                  ? {
-                      transform:
-                        "translate(" +
-                        drag.x +
-                        "px," +
-                        drag.y +
-                        "px) rotate(" +
-                        Math.max(-12, Math.min(12, drag.x / 24)) +
-                        "deg)",
-                      transition: "none",
-                    }
-                  : undefined
-              }
+              className="question"
               onPointerDown={(e) => {
-                if (locked.current) return;
+                if (locked.current || !e.isPrimary || e.button !== 0) return;
                 e.currentTarget.setPointerCapture(e.pointerId);
                 origin.current = {
                   x: e.clientX,
@@ -123,7 +123,7 @@ export function CardStack({
               }}
               onPointerMove={(e) => {
                 const o = origin.current;
-                if (!o) return;
+                if (!o || !e.isPrimary) return;
                 const x = e.clientX - o.x,
                   y = e.clientY - o.y;
                 setDrag({ x, y });
@@ -136,13 +136,14 @@ export function CardStack({
                   o.ticked = true;
                 }
               }}
-              onPointerCancel={() => {
+              onLostPointerCapture={(e) => {
+                if (!e.isPrimary) return;
                 origin.current = null;
                 setDrag({ x: 0, y: 0 });
               }}
               onPointerUp={(e) => {
                 const o = origin.current;
-                if (!o) return;
+                if (!o || !e.isPrimary) return;
                 origin.current = null;
                 const x = e.clientX - o.x,
                   y = e.clientY - o.y;
@@ -159,14 +160,6 @@ export function CardStack({
               }}
             >
               <h1>{q.question}</h1>
-              {Math.max(Math.abs(drag.x), Math.abs(drag.y)) > 57 && (
-                <b className="drag-label">
-                  {
-                    q.options.find((o) => o.value === direction(drag.x, drag.y))
-                      ?.label
-                  }
-                </b>
-              )}
             </article>
             <div className="actions">
               {q.options.map((o) => (
@@ -174,6 +167,7 @@ export function CardStack({
                   key={o.value}
                   disabled={!!chosen}
                   data-feedback="custom"
+                  data-preview={preview === o.value || undefined}
                   className={
                     "answer " + o.value + (chosen === o.value ? " picked" : "")
                   }

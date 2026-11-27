@@ -9,10 +9,10 @@ export const available = packs.filter(
 
 const themeArt = ["heart", "theme-chat", "theme-sparks", "theme-heart"];
 const captions = [
-  "지금 우리, 썸일까?",
+  "지금 우리 썸일까?",
   "내 마음이 궁금해?",
   "혹시 나만 신경 쓰여?",
-  "이 감정, 들키고 싶어?",
+  "이 감정 들키고 싶어?",
 ];
 
 export function Home({

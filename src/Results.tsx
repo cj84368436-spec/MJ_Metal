@@ -1,38 +1,46 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Download, LockKeyhole, Play } from "lucide-react";
-import {
-  AdState,
-  Pack,
-  passPrice,
-  reading,
-  Result,
-  roomPrice,
-} from "./domain";
+import { AdState, Pack, passPrice, reading, Result, roomPrice } from "./domain";
 import { buzz, reduced, showRewardedAd, adsAvailable, AdPhase } from "./bridge";
 import { asset } from "./paths";
 import "./room-sketch.css";
 
 function usePercent(target: number) {
-  const [n, setN] = useState<number | null>(() => (reduced() ? target : null));
+  const element = useRef<HTMLElement>(null);
+  const [value, setValue] = useState(() => (reduced() ? target : 0));
   useEffect(() => {
-    if (reduced()) {
-      setN(target);
+    if (reduced() || target === 0) {
+      setValue(target);
       return;
     }
-    const start = performance.now() + 300;
-    let id = 0;
-    const frame = (time: number) => {
-      if (time >= start) {
-        const t = Math.min((time - start) / 900, 1);
-        setN(Math.round(target * (1 - (1 - t) ** 3)));
-        if (t === 1) return;
+    let frame = 0;
+    function start() {
+      const startTime = performance.now();
+      function tick(now: number) {
+        const progress = Math.min(Math.max(0, now - startTime) / 780, 1);
+        setValue(Math.round(target * (1 - (1 - progress) ** 3)));
+        if (progress < 1) frame = requestAnimationFrame(tick);
       }
-      id = requestAnimationFrame(frame);
+      frame = requestAnimationFrame(tick);
+    }
+    setValue(0);
+    // On short screens the reading can first become visible after a scroll.
+    const observer =
+      typeof IntersectionObserver !== "undefined" && element.current
+        ? new IntersectionObserver(([entry]) => {
+            if (!entry.isIntersecting) return;
+            observer?.disconnect();
+            start();
+          })
+        : null;
+    if (observer && element.current) observer.observe(element.current);
+    else start();
+    return () => {
+      observer?.disconnect();
+      cancelAnimationFrame(frame);
     };
-    id = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(id);
   }, [target]);
-  return n;
+  return { element, value };
 }
 async function exportImage(result: Result) {
   const canvas = document.createElement("canvas");
@@ -127,9 +135,12 @@ export function Results({
   replayBusy = false,
   home,
 }: Props) {
-  const n = usePercent(result.percent);
+  const ratio = usePercent(result.percent);
   const analysis = reading(result.matched);
   const chance = usePercent(analysis.chance);
+  const [initiallyOpen] = useState(
+    () => new Set(result.opened.map((q) => q.id)),
+  );
   const [error, setError] = useState("");
   const [adError, setAdError] = useState("");
   const [phase, setPhase] = useState<AdPhase | "">("");
@@ -182,15 +193,19 @@ export function Results({
         <p>겹친 비율</p>
         <div className="room-ratio">
           <i className="room-rays" aria-hidden="true" />
-          <strong className="room-percent" aria-label={result.percent + "%"}>
-            {n === null ? "…" : n + "%"}
+          <strong
+            ref={ratio.element}
+            className="room-percent"
+            aria-label={result.percent + "%"}
+          >
+            {ratio.value}%
           </strong>
           <i className="room-rays" aria-hidden="true" />
         </div>
         <div
           className="room-result-count"
           role="img"
-          aria-label={`전체 5장 중 겹친 카드 ${result.matched}장, 겹치지 않은 카드 ${result.sealed}장`}
+          aria-label={`전체 5장 중 겹친 카드 ${result.matched}장 · 겹치지 않은 카드 ${result.sealed}장`}
         >
           {Array.from({ length: 5 }, (_, i) => (
             <img
@@ -217,14 +232,17 @@ export function Results({
         <h2>{analysis.headline}</h2>
         <div className="room-chance">
           <span>호감 확률</span>
-          <strong aria-label={`호감 확률 ${analysis.chance}퍼센트`}>
-            {chance === null ? "…" : chance + "%"}
+          <strong
+            ref={chance.element}
+            aria-label={`호감 확률 ${analysis.chance}퍼센트`}
+          >
+            {chance.value}%
           </strong>
           <div className="room-chance-track" aria-hidden="true">
-            <i style={{ width: (chance ?? analysis.chance) + "%" }} />
+            <i style={{ transform: `scaleX(${chance.value / 100})` }} />
           </div>
         </div>
-        <p>{analysis.body}</p>
+        <p>{analysis.body.replace(", ", " ")}</p>
         <small>
           둘 다 맞은 카드 수로 매긴 참고 수치예요 · 재미로 봐주세요.
         </small>
@@ -257,7 +275,11 @@ export function Results({
         )}
       </div>
       {result.opened.map((q) => (
-        <article className="paper-sheet room-open-card" key={q.id}>
+        <article
+          className="paper-sheet room-open-card"
+          data-revealed={initiallyOpen.has(q.id) ? undefined : true}
+          key={q.id}
+        >
           <span className="room-card-label">
             <img src={asset("sketch/heart.png")} alt="" />
             {q.id === result.adBonusId ? "광고로 연 카드" : "함께 열린 카드"}
@@ -307,7 +329,7 @@ export function Results({
                         : "광고 보고 1장 무료로 더 열기"}
                   </button>
                   <small className="ad-note">
-                    광고 한 편을 끝까지 보면 이 방에서 한 번, 통한 카드 1장이
+                    광고 한 편을 끝까지 보면 이 방에서 한 번만 통한 카드 1장이
                     바로 열려요.
                   </small>
                   {adError && (
@@ -329,15 +351,14 @@ export function Results({
 
       {result.sealed > 0 && (
         <p className="sealed">
-          아쉽게 엇갈린 질문 {result.sealed}장 · 누가 뭘 골랐는지는 알 수 없어요.
+          아쉽게 엇갈린 질문 {result.sealed}장 · 누가 뭘 골랐는지는 알 수
+          없어요.
         </p>
       )}
 
       {!demo && onNext && (
         <section className="room-next">
-          <h2>
-            {nextTitle ? "다음 단계 · " + nextTitle : "다음 단계 팩"}
-          </h2>
+          <h2>{nextTitle ? "다음 단계 · " + nextTitle : "다음 단계 팩"}</h2>
           <p>
             {analysis.next === "confess"
               ? "이 분위기 그대로 한 판 더 하면 서로 말할 게 더 줄어들어요."

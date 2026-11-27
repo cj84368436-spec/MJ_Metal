@@ -230,7 +230,7 @@ export async function setNickname(id: string, text: string) {
     (!/^[\p{L}\p{N}]{2,6}$/u.test(nick) ||
       /씨발|시발|병신|개새끼|fuck|shit/i.test(nick))
   )
-    throw new Error("닉네임은 편안한 말로, 글자나 숫자 2~6자로 적어주세요.");
+    throw new Error("닉네임은 편안한 말로 글자나 숫자 2~6자로 적어주세요.");
   await editRoom(() => {
     const room = access(id, null);
     write("room." + id, { ...room, nick });

@@ -310,10 +310,10 @@ export function Room({ id, guest, step, go, replay, toast }: Props) {
               <h2>
                 {data.nick ? data.nick + "님이" : "누군가"} 카드 5장을 보냈어요
               </h2>
-              <p>다섯 장에 답하면, 둘 다 좋다고 한 카드만 열려요.</p>
+              <p>다섯 장에 답하면 둘 다 좋다고 한 카드만 열려요.</p>
               <blockquote>{data.questions[2]?.question}</blockquote>
               <small>
-                네가 뭘 골랐는지, 상대는 알 수 없어요. 서로 다른 카드는 아무것도
+                네가 뭘 골랐는지 상대는 알 수 없어요. 서로 다른 카드는 아무것도
                 알려주지 않아요.
               </small>
             </div>
