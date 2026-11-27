@@ -26,8 +26,6 @@ import { Room } from "./Room";
 import { Results } from "./Results";
 import "./style.css";
 
-declare const __HAS_HOME_COVER__: boolean;
-
 type Draft = {
   packId: string;
   ids: string[];
@@ -214,8 +212,7 @@ function App() {
   const roomId =
     /^\/r\/([a-z0-9]{8})$/.exec(url.pathname)?.[1] ??
     (url.pathname === "/" ? url.searchParams.get("room") : null);
-  const cover = home && __HAS_HOME_COVER__;
-  const theme = (home && !cover) || (step === "theme" && url.pathname === "/");
+  const theme = step === "theme" && url.pathname === "/";
   let page;
   if (roomId)
     page = (
@@ -235,7 +232,7 @@ function App() {
   else if (isLibrary) page = <Library go={go} />;
   else if (url.pathname === "/demo")
     page = <Demo pack={pack} start={() => start(pack)} />;
-  else if (cover) page = <Cover start={() => go("/?step=theme")} />;
+  else if (home) page = <Cover start={() => go("/?step=theme")} />;
   else if (theme)
     page = (
       <Home
@@ -302,7 +299,7 @@ function App() {
         if (button && !button.disabled && !button.dataset.feedback) buzz();
       }}
     >
-      <main className={cover ? "app-main cover-main" : "app-main"}>
+      <main className={home ? "app-main cover-main" : "app-main"}>
         {!home && !native && (
           <button className="back" aria-label="뒤로" onClick={back}>
             <ChevronLeft size={25} strokeWidth={2.7} />
@@ -315,7 +312,7 @@ function App() {
           </p>
         )}
       </main>
-      {(home || theme || isLibrary) && (
+      {(theme || isLibrary) && (
         <nav className="tabbar" aria-label="주 메뉴">
           <button
             aria-current={home || theme ? "page" : undefined}

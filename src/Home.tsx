@@ -94,7 +94,9 @@ export function Cover({ start }: { start: () => void }) {
     <section className="cover" aria-label="썸 속마음 질문">
       <img
         src={asset("secret-five-cover.jpg")}
-        alt="썸 속마음 질문 확정 홈 표지"
+        width={720}
+        height={1280}
+        alt="우리 썸인가? 비밀 다섯 장. 두 사람이 마주 보고 있어요."
       />
       <button
         className="cover-start"

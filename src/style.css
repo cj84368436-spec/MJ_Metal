@@ -224,11 +224,15 @@ label {
 .tabbar [aria-current] {
   color: var(--wine);
 }
-.cover-main {
+.app-main.cover-main {
+  display: grid;
+  place-items: center;
+  background-color: #b2d5f5;
   padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
-  flex: 0;
+  flex: 1;
 }
 .cover {
+  width: min(100%, calc((100svh - var(--safe-top) - var(--safe-bottom)) * 0.5625));
   position: relative;
 }
 .cover img {
@@ -238,10 +242,10 @@ label {
 }
 .cover-start {
   position: absolute;
-  left: 8.5%;
-  right: 11%;
-  top: 81.5%;
-  height: 10%;
+  left: 8.61%;
+  right: 11.11%;
+  top: 81.64%;
+  height: 9.38%;
   border-radius: 999px;
 }
 .theme-screen {
@@ -867,9 +871,6 @@ dialog h1 + p {
   }
   .app-main {
     padding-inline: 22px;
-  }
-  .cover-main {
-    padding-inline: 0;
   }
 }
 @media (max-width: 345px) {
