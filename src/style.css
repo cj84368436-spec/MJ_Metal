@@ -682,6 +682,30 @@ label {
 .empty {
   margin-top: 22px;
 }
+.crash {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 26px 4px 0;
+}
+.crash-heart {
+  width: 66px;
+  margin: 12px 0 4px;
+}
+.crash h1 {
+  font: 400 clamp(24px, 6.2vw, 29px) / 1.28 var(--hand);
+  letter-spacing: -0.03em;
+}
+.crash p {
+  max-width: 19em;
+}
+.crash-actions {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  max-width: 320px;
+  margin-top: 20px;
+}
 .done h1,
 .empty h2 {
   margin: 10px 0;

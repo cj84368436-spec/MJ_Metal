@@ -24,6 +24,7 @@ import { Setup } from "./Setup";
 import { CardStack } from "./CardStack";
 import { Room } from "./Room";
 import { Results } from "./Results";
+import { ErrorBoundary } from "./ErrorBoundary";
 import "./style.css";
 
 type Draft = {
@@ -337,4 +338,8 @@ function App() {
     </div>
   );
 }
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>,
+);
